@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
     steps:
       - uses: actions/checkout@v3
 
@@ -21,15 +22,37 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libxml2-dev
+
+      # Install BiocManager and rhdf5 early
+      - name: Install BiocManager
+        run: |
+          install.packages("BiocManager")
+          BiocManager::install("rhdf5")
+        shell: Rscript {0}
+
+      # Install cmdstanr before other dependencies
+      - name: Install cmdstanr
+        run: |
+          install.packages("remotes")
+          remotes::install_github("stan-dev/cmdstanr")
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::install_cmdstan(cores = 2)
+        shell: Rscript {0}
+
+      # Install remaining dependencies
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
             any::pkgdown
             any::knitr
             any::rmarkdown
-            bioc::rhdf5
             any::ggrepel
             any::pheatmap
+            local::.
           needs: website
 
       - name: Build pkgdown site

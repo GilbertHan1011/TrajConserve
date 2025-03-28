@@ -27,25 +27,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libxml2-dev libgsl-dev
 
-      # Modify DESCRIPTION file to remove cmdstanr completely
-      - name: Remove cmdstanr from DESCRIPTION
-        run: |
-          # Modify DESCRIPTION file using R instead of sed
-          desc <- read.dcf("DESCRIPTION")
-          if ("Suggests" %in% colnames(desc)) {
-            suggests <- desc[1, "Suggests"]
-            # Remove cmdstanr from Suggests
-            suggests <- gsub("cmdstanr,|,cmdstanr|cmdstanr", "", suggests)
-            # Update the Suggests field
-            desc[1, "Suggests"] <- suggests
-          }
-          # Write back to DESCRIPTION file
-          write.dcf(desc, "DESCRIPTION")
-          
-          # Show the modified file for debugging
-          cat(readLines("DESCRIPTION"), sep="\n")
-        shell: Rscript {0}
-
       # Install dependencies manually
       - name: Install dependencies
         run: |
@@ -100,10 +81,21 @@ jobs:
           echo "Please refer to the [README](https://github.com/GilbertHan1011/TrajConserve) for complete installation instructions, especially the section on Stan Setup." >> vignettes/stan_note.Rmd
         shell: bash
 
-      # Install the local package
-      - name: Install package
+      # Build and install the package using R CMD methods
+      - name: Build and install package
         run: |
-          install.packages(".", repos = NULL, type = "source")
+          # Build the package tarball
+          R CMD build .
+          
+          # Get the tarball filename
+          PKG_TARBALL=$(ls -1t *.tar.gz | head -n 1)
+          
+          # Install the built package
+          install.packages(PKG_TARBALL, repos = NULL, type = "source")
+          
+          # Verify installation
+          library(TrajConserve)
+          packageVersion("TrajConserve")
         shell: Rscript {0}
 
       - name: Build pkgdown site

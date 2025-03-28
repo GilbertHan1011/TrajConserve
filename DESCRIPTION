@@ -35,10 +35,9 @@ Suggests:
     rhdf5,
     pheatmap,
     pkgdown,
-    ggrepel,
-    cmdstanr
+    ggrepel
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
-URL: https://github.com/GilbertHan1011/TrajConserve
+URL: https://github.com/GilbertHan1011/TrajConserve, https://GilbertHan1011.github.io/TrajConserve
 BugReports: https://github.com/GilbertHan1011/TrajConserve/issues

@@ -25,7 +25,21 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libxml2-dev
+          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libxml2-dev libgsl-dev
+          
+      - name: Set up C++ compilation for Stan
+        run: |
+          mkdir -p ~/.R
+          echo 'CXX14 = g++' >> ~/.R/Makevars
+          echo 'CXX17 = g++' >> ~/.R/Makevars
+          echo 'CXX14FLAGS = -O3 -march=native -mtune=native -fPIC' >> ~/.R/Makevars
+          echo 'CXX17FLAGS = -O3 -march=native -mtune=native -fPIC' >> ~/.R/Makevars
+          echo 'STAN_CXX17 = TRUE' >> ~/.R/Makevars
+          echo 'STAN_HAS_CXX17 = TRUE' >> ~/.R/Makevars
+          echo 'TBB_CXX_TYPE = gcc' >> ~/.R/Makevars
+          mkdir -p ~/.cmdstan/make
+          echo 'STAN_HAS_CXX17 = true' >> ~/.cmdstan/make/local
+          echo 'TBB_CXX_TYPE = gcc' >> ~/.cmdstan/make/local
 
       # Install BiocManager and rhdf5 early
       - name: Install BiocManager
@@ -34,13 +48,14 @@ jobs:
           BiocManager::install("rhdf5")
         shell: Rscript {0}
 
-      # Install cmdstanr before other dependencies
+      # Install cmdstanr with proper settings
       - name: Install cmdstanr
         run: |
           install.packages("remotes")
-          remotes::install_github("stan-dev/cmdstanr")
+          remotes::install_github("stan-dev/cmdstanr", INSTALL_opts = "--no-multiarch")
+          options(timeout = 600)
           cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2)
+          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, quiet = FALSE)
         shell: Rscript {0}
 
       # Install remaining dependencies

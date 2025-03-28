@@ -1,0 +1,330 @@
+---
+title: "TrajConserve Workflow"
+author: "Gilbert Han"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TrajConserve Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+## Introduction
+
+This vignette demonstrates a complete workflow for trajectory conservation analysis with the TrajConserve package. TrajConserve enables the identification of conserved and non-conserved gene expression patterns across developmental trajectories in single-cell RNA-seq data.
+
+The workflow includes:
+
+1. Loading and preparing data
+2. Converting Seurat objects to trajectory arrays
+3. Running Bayesian GAM models on gene expression trajectories
+4. Storing results in HDF5 files for efficiency
+5. Extracting and visualizing model metrics
+6. Calculating conservation scores to identify conserved genes
+
+## Installation
+
+Before starting, make sure you have TrajConserve installed:
+
+```{r installation, eval=FALSE}
+# Install from GitHub
+devtools::install_github("GilbertHan1011/TrajConserve")
+
+# Install required dependencies
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("rhdf5")
+
+install.packages(c("brms", "ggplot2", "pheatmap", "ggrepel"))
+```
+
+### Setting up Stan (Important!)
+
+TrajConserve relies on Stan for Bayesian modeling. To avoid compilation issues, you need to set up your environment correctly:
+
+```{r setup_stan, eval=FALSE}
+# Install cmdstanr
+install.packages("remotes")
+remotes::install_github("stan-dev/cmdstanr")
+
+# Configure C++ compiler settings for Stan
+# Create/edit ~/.R/Makevars
+cat('CXX14 = g++
+CXX17 = g++
+CXX14FLAGS = -O3 -march=native -mtune=native -fPIC
+CXX17FLAGS = -O3 -march=native -mtune=native -fPIC
+STAN_CXX17 = TRUE
+STAN_HAS_CXX17 = TRUE
+TBB_CXX_TYPE = gcc', 
+file = file.path(Sys.getenv("HOME"), ".R", "Makevars"))
+
+# Create/edit ~/.cmdstan/make/local
+dir.create(file.path(Sys.getenv("HOME"), ".cmdstan", "make"), recursive = TRUE, showWarnings = FALSE)
+cat('STAN_HAS_CXX17 = true
+TBB_CXX_TYPE = gcc', 
+file = file.path(Sys.getenv("HOME"), ".cmdstan", "make", "local"))
+
+# Install cmdstan
+cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+options(timeout = 600)  # Set a longer timeout for downloading
+cmdstanr::install_cmdstan(cores = 2,overwrite=TRUE)
+```
+
+These settings ensure that Stan can properly compile with your C++ toolchain. Without these configurations, you might encounter errors like:
+
+```
+Error in `(function (command = NULL, args = character(), error_on_status = TRUE, …`:
+! System command 'make' failed
+---
+Exit status: 2
+Stderr:
+stan/lib/stan_math/make/compiler_flags:145: "Stan cannot detect if your compiler has the C++17 standard."
+stan/lib/stan_math/make/libraries:114: *** "Need to set TBB_CXX_TYPE for non-standard compiler."
+```
+
+## Load Required Packages
+
+Start by loading the necessary packages:
+
+```{r load_packages}
+library(TrajConserve)
+library(Seurat)
+library(ggplot2)
+library(rhdf5)
+```
+
+## Load and Prepare Data
+
+First, we load a prepared Seurat object containing single-cell data with pseudotime information:
+
+```{r load_data}
+# Load example Seurat object
+small_epi <- readRDS("data/small_example.Rds")
+
+# Examine the structure
+small_epi
+```
+
+The Seurat object should contain:
+- Expression data in an appropriate assay
+- Pseudotime values in metadata
+- Project/sample/batch information in metadata
+
+## Convert Seurat Object to Trajectory Array
+
+Next, we convert the Seurat object to a format suitable for trajectory modeling:
+
+```{r trajectory_array}
+trajectory_data <- seurat_to_trajectory_array(
+  seurat_obj = small_epi,
+  assay = "originalexp",      # Assay containing expression data
+  pseudo_col = "pseudo",      # Column with pseudotime values
+  project_col = "Project"     # Column with project/sample identifiers
+)
+
+# Examine the structure of the trajectory data
+str(trajectory_data)
+```
+
+The `seurat_to_trajectory_array` function creates:
+- A 3D array of expression data organized by gene, pseudotime, and sample
+- Gene names and sample metadata
+- Binned pseudotime values for modeling
+
+## Test a Single Trajectory Model
+
+Before running models on multiple genes, it's often helpful to test with a single gene:
+
+```{r test_model}
+# Select a gene index to test
+gene_idx <- 10  # Example gene index
+
+# Run a test model for one gene
+model_test <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx)
+
+# Visualize the model results
+plot_results_brms(model_test)
+```
+
+This creates a test model for one gene and visualizes the trajectory across samples. The plot shows the fitted GAM curve with uncertainty intervals for each sample.
+
+## Run Multiple Models and Save Results
+
+For comprehensive analysis, we run models for multiple genes in parallel:
+
+```{r run_multiple, eval=FALSE}
+# Define output directory
+savedir <- "results/"
+dir.create(savedir, showWarnings = FALSE)
+
+# Run models for multiple genes
+TrajConserve::run_multiple_models(
+  trajectory_data$reshaped_data,
+  gene_indices = 1:20,      # First 20 genes (adjust as needed)
+  parallel = TRUE,
+  n_cores = 4,              # Adjust based on your computing resources
+  save_metrics = TRUE,
+  save_metrics_file = paste0(savedir, "test1.hdf5"),
+  save_plots = TRUE,
+  save_plots_dir = savedir,
+  save_models = TRUE,
+  save_models_dir = savedir
+)
+```
+
+This process:
+- Runs Bayesian GAM models for each selected gene
+- Executes in parallel for efficiency
+- Saves model metrics to an HDF5 file
+- Saves diagnostic plots as PDFs
+- Saves the model objects as RDS files
+
+## Access and Examine HDF5 Results
+
+After model fitting, we can examine the saved results:
+
+```{r examine_hdf5, eval=FALSE}
+# Open the HDF5 file
+h5_file <- paste0(savedir, "test1.hdf5")
+h5_test <- rhdf5::H5Fopen(h5_file)
+
+# List the contents of the HDF5 file
+rhdf5::h5ls(h5_file)
+
+# Examine the weight matrix
+h5_test$"array_weights"
+
+# Close the HDF5 file
+rhdf5::H5Fclose(h5_test)
+```
+
+The HDF5 file contains various metrics from our models, including:
+- Coefficient estimates
+- Standard errors
+- R-squared values
+- Significance measures
+- And more
+
+## Extract Metrics and Visualize Results
+
+TrajConserve provides functions to extract metrics and visualize results:
+
+```{r extract_metrics, eval=FALSE}
+# Extract metrics from the HDF5 file
+metric <- TrajConserve::extract_hdf5_metric(paste0(savedir, "test1.hdf5"))
+
+# Examine the extracted metrics
+dim(metric)
+head(metric)
+
+# Create a heatmap visualization of the metrics
+TrajConserve::plot_hdf5_heatmap(paste0(savedir, "test1.hdf5"))
+```
+
+The `extract_hdf5_metric` function retrieves a specific metric from the HDF5 file, while `plot_hdf5_heatmap` creates a visualization showing patterns across genes and samples.
+
+## Calculate Conservation Scores
+
+Finally, we calculate conservation scores to identify conserved genes:
+
+```{r conservation, eval=FALSE}
+# Calculate conservation scores
+conservation_results <- TrajConserve::calculate_conservation(
+  paste0(savedir, "test1.hdf5"),
+  metric = "Estimate",
+  mean_weight = 0.6,
+  variability_weight = 0.4,
+  conservation_threshold = 0.7
+)
+
+# Examine conservation results
+head(conservation_results)
+
+# Count conserved and non-conserved genes
+table(conservation_results$is_conserved)
+
+# Create visualizations of conservation results
+plot_conservation(
+  conservation_results,
+  plot_type = "scatter",
+  highlight_n = 10,
+  file_path = paste0(savedir, "conservation_scatter.pdf")
+)
+
+plot_conservation(
+  conservation_results,
+  plot_type = "histogram",
+  file_path = paste0(savedir, "conservation_histogram.pdf")
+)
+```
+
+The conservation analysis:
+- Calculates a conservation score based on mean expression and variability
+- Classifies genes as conserved or non-conserved
+- Provides visualizations to interpret the results
+
+## Advanced Visualization
+
+For publication-quality visualizations, we can combine conservation results with expression patterns:
+
+```{r advanced_viz, eval=FALSE}
+# Create a heatmap with gene conservation annotation
+library(pheatmap)
+
+# Extract estimate matrix
+estimate_matrix <- extract_hdf5_metric(paste0(savedir, "test1.hdf5"), "Estimate")
+
+# Create annotation data frame
+gene_type <- ifelse(conservation_results$is_conserved, "Conserved", "Non-conserved")
+gene_anno <- data.frame(
+  Conservation = factor(gene_type, levels = c("Conserved", "Non-conserved")),
+  row.names = conservation_results$gene
+)
+
+# Create heatmap
+pheatmap(t(estimate_matrix), 
+         annotation_row = gene_anno,
+         main = "Expression Patterns of Conserved vs Non-conserved Genes",
+         filename = paste0(savedir, "conservation_heatmap.pdf"))
+```
+
+This creates a heatmap that shows expression patterns across samples, with genes annotated by their conservation status.
+
+## Conclusion
+
+This workflow demonstrates the complete process of trajectory conservation analysis with TrajConserve:
+
+1. We prepared single-cell data with pseudotime information
+2. Converted it to trajectory arrays suitable for modeling
+3. Ran Bayesian GAM models to characterize expression trajectories
+4. Stored results efficiently in HDF5 files
+5. Extracted metrics and created visualizations
+6. Calculated conservation scores to identify conserved genes
+
+The identified conserved genes represent expression patterns that are maintained across samples/conditions/species, potentially indicating functionally important developmental programs.
+
+## Next Steps
+
+After identifying conserved and non-conserved genes, you might:
+
+- Perform Gene Ontology enrichment analysis on each gene set
+- Integrate with other types of genomic data
+- Compare conservation across different developmental stages
+- Investigate specific gene modules of interest in greater detail
+
+## Session Info
+
+```{r session_info, eval=FALSE}
+sessionInfo()
+```

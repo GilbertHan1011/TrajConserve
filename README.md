@@ -51,6 +51,41 @@ BiocManager::install("rhdf5")
 install.packages(c("brms", "ggplot2", "pheatmap", "ggrepel"))
 ```
 
+### Stan Setup (Important)
+
+TrajConserve uses Stan (via cmdstanr) for Bayesian modeling. To avoid C++ compilation issues, configure your environment:
+
+```r
+# Install cmdstanr
+install.packages("remotes")
+remotes::install_github("stan-dev/cmdstanr")
+
+# Create necessary configuration files
+# 1. Configure C++ compiler settings in ~/.R/Makevars
+dir.create(file.path(Sys.getenv("HOME"), ".R"), showWarnings = FALSE)
+cat('CXX14 = g++
+CXX17 = g++
+CXX14FLAGS = -O3 -march=native -mtune=native -fPIC
+CXX17FLAGS = -O3 -march=native -mtune=native -fPIC
+STAN_CXX17 = TRUE
+STAN_HAS_CXX17 = TRUE
+TBB_CXX_TYPE = gcc', 
+file = file.path(Sys.getenv("HOME"), ".R", "Makevars"))
+
+# 2. Configure cmdstan make settings
+dir.create(file.path(Sys.getenv("HOME"), ".cmdstan", "make"), recursive = TRUE, showWarnings = FALSE)
+cat('STAN_HAS_CXX17 = true
+TBB_CXX_TYPE = gcc', 
+file = file.path(Sys.getenv("HOME"), ".cmdstan", "make", "local"))
+
+# Install cmdstan
+cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+options(timeout = 600)  # Set a longer timeout for downloading
+cmdstanr::install_cmdstan(cores = 2)
+```
+
+These settings ensure Stan can properly compile with your C++ environment. Without this configuration, you might encounter errors related to C++17 detection and TBB_CXX_TYPE settings.
+
 ## Quick Start
 
 ### Trajectory Modeling
@@ -62,17 +97,20 @@ library(TrajConserve)
 trajectory_data <- seurat_to_trajectory_array(
   seurat_obj = your_seurat_object,
   assay = "RNA",
-  pseudotime_col = "pseudotime",
-  batch_col = "sample_id",
+  pseudo_col = "pseudotime",
+  project_col = "sample_id",
   genes = c("Gene1", "Gene2", "Gene3", "Gene4")
 )
 
 # Run multiple models and save to HDF5
 run_multiple_models(
-  data_array = trajectory_data,
-  output_file = "trajectory_models.h5",
-  family = "negbinomial",
-  n_cores = 4
+  data_array = trajectory_data$reshaped_data,
+  gene_indices = 1:20,
+  parallel = TRUE,
+  n_cores = 4,
+  save_metrics = TRUE,
+  save_metrics_file = "trajectory_models.h5",
+  save_plots = TRUE
 )
 ```
 

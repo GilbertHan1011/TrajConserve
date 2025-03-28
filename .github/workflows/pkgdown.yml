@@ -80,6 +80,7 @@ jobs:
             any::ggrepel
             any::pheatmap
           needs: website
+          packages-ignore: cmdstanr
 
       # Add a note about cmdstanr to documentation
       - name: Create documentation note

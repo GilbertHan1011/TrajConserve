@@ -27,60 +27,52 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libxml2-dev libgsl-dev
 
-      # This step creates a simple mock version of the cmdstanr package
-      - name: Create mock cmdstanr package
+      # Modify DESCRIPTION file to remove cmdstanr completely
+      - name: Remove cmdstanr from DESCRIPTION
         run: |
-          mkdir -p R
+          # Read DESCRIPTION file
+          desc_content=$(cat DESCRIPTION)
           
-          # Create a file to mock cmdstanr package
-          cat > R/mock_cmdstanr.R << 'EOF'
-          # Mock cmdstanr package
-          .onLoad <- function(libname, pkgname) {
-            message("Mock cmdstanr package loaded")
-          }
+          # Remove cmdstanr from Suggests (using sed)
+          desc_content=$(echo "$desc_content" | sed -E 's/cmdstanr,|,cmdstanr|cmdstanr//g')
           
-          cmdstan_path <- function() {
-            "/mock/cmdstan/path"
-          }
+          # Write modified content back to DESCRIPTION
+          echo "$desc_content" > DESCRIPTION
           
-          cmdstan_model <- function(...) {
-            message("Mock cmdstan_model function called")
-            list(
-              sample = function(...) {
-                message("Mock sample function called")
-                list(
-                  summary = function() {
-                    data.frame(
-                      parameter = c("mu", "sigma"),
-                      mean = c(0, 1),
-                      sd = c(0.1, 0.2)
-                    )
-                  }
-                )
-              }
-            )
-          }
-          EOF
+          # Show the modified file for debugging
+          cat DESCRIPTION
         shell: bash
 
-      # Install BiocManager and rhdf5 early
-      - name: Install BiocManager
+      # Install dependencies manually
+      - name: Install dependencies
         run: |
+          # Install BiocManager
           install.packages("BiocManager")
+          
+          # Install packages from CRAN
+          install.packages(c(
+            "pkgdown", 
+            "knitr", 
+            "rmarkdown", 
+            "ggrepel", 
+            "pheatmap",
+            "brms",
+            "ggplot2",
+            "gridExtra",
+            "dplyr",
+            "foreach",
+            "doParallel",
+            "progressr",
+            "data.table",
+            "tools"
+          ))
+          
+          # Install packages from Bioconductor
           BiocManager::install("rhdf5")
+          
+          # Install Seurat
+          install.packages("Seurat")
         shell: Rscript {0}
-
-      # Install remaining dependencies
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            any::pkgdown
-            any::knitr
-            any::rmarkdown
-            any::ggrepel
-            any::pheatmap
-          needs: website
-          packages-ignore: cmdstanr
 
       # Add a note about cmdstanr to documentation
       - name: Create documentation note
@@ -104,7 +96,7 @@ jobs:
           echo "Please refer to the [README](https://github.com/GilbertHan1011/TrajConserve) for complete installation instructions, especially the section on Stan Setup." >> vignettes/stan_note.Rmd
         shell: bash
 
-      # Install the local package without Stan
+      # Install the local package
       - name: Install package
         run: |
           install.packages(".", repos = NULL, type = "source")

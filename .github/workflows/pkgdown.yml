@@ -13,8 +13,6 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      # Add environment variables to prevent cmdstanr path issues
-      R_CMDSTANR_PATH: "/home/runner/.cmdstan"
     steps:
       - uses: actions/checkout@v3
 
@@ -28,43 +26,90 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libxml2-dev libgsl-dev
-          
-      - name: Set up C++ compilation for Stan
+
+      # Create R package mock directory
+      - name: Set up mock package directory
         run: |
-          mkdir -p ~/.R
-          echo 'CXX14 = g++' >> ~/.R/Makevars
-          echo 'CXX17 = g++' >> ~/.R/Makevars
-          echo 'CXX14FLAGS = -O3 -march=native -mtune=native -fPIC' >> ~/.R/Makevars
-          echo 'CXX17FLAGS = -O3 -march=native -mtune=native -fPIC' >> ~/.R/Makevars
-          echo 'STAN_CXX17 = TRUE' >> ~/.R/Makevars
-          echo 'STAN_HAS_CXX17 = TRUE' >> ~/.R/Makevars
-          echo 'TBB_CXX_TYPE = gcc' >> ~/.R/Makevars
-          mkdir -p ~/.cmdstan/make
-          echo 'STAN_HAS_CXX17 = true' >> ~/.cmdstan/make/local
-          echo 'TBB_CXX_TYPE = gcc' >> ~/.cmdstan/make/local
+          mkdir -p ~/.R/mocks
+          # Create a mock cmdstanr package to prevent any installation attempts
+          mkdir -p ~/.R/mocks/cmdstanr/R
+          mkdir -p ~/.R/mocks/cmdstanr/man
+          
+          # Create a dummy DESCRIPTION file for the mock package
+          cat > ~/.R/mocks/cmdstanr/DESCRIPTION << 'EOF'
+          Package: cmdstanr
+          Version: 0.5.3
+          Title: Mock Implementation of CmdStanR Package
+          Description: Mock implementation that does nothing but avoids installation errors.
+          Authors@R: person("Mock", "Author", role = c("aut", "cre"), email = "mock@example.com")
+          License: GPL-3
+          Encoding: UTF-8
+          EOF
+          
+          # Create an R file that provides dummy functions
+          cat > ~/.R/mocks/cmdstanr/R/cmdstanr.R << 'EOF'
+          cmdstan_path <- function() { return("/mock/path") }
+          cmdstan_path_exists <- function() { return(TRUE) }
+          install_cmdstan <- function(...) { return(TRUE) }
+          check_cmdstan_toolchain <- function(...) { return(TRUE) }
+          EOF
+          
+          # Create a NAMESPACE file
+          cat > ~/.R/mocks/cmdstanr/NAMESPACE << 'EOF'
+          export(cmdstan_path)
+          export(cmdstan_path_exists)
+          export(install_cmdstan)
+          export(check_cmdstan_toolchain)
+          EOF
+          
+          # Create a dummy help file
+          cat > ~/.R/mocks/cmdstanr/man/cmdstan_path.Rd << 'EOF'
+          \name{cmdstan_path}
+          \alias{cmdstan_path}
+          \title{Mock function}
+          \description{Mock function}
+          \usage{cmdstan_path()}
+          EOF
+          
+          # Install the mock package
+          R CMD INSTALL ~/.R/mocks/cmdstanr
+        shell: bash
+
+      # Completely remove cmdstanr dependencies from DESCRIPTION
+      - name: Remove cmdstanr dependencies
+        run: |
+          # Read the DESCRIPTION file
+          desc_file <- readLines("DESCRIPTION")
+          
+          # Remove cmdstanr from Imports
+          imports_line <- which(grepl("^Imports:", desc_file))
+          if (any(imports_line) && grepl("cmdstanr", desc_file[imports_line])) {
+            desc_file[imports_line] <- gsub("cmdstanr,", "", desc_file[imports_line])
+            desc_file[imports_line] <- gsub(",cmdstanr", "", desc_file[imports_line])
+            desc_file[imports_line] <- gsub("cmdstanr", "", desc_file[imports_line])
+          }
+          
+          # Remove cmdstanr from Suggests
+          suggests_line <- which(grepl("^Suggests:", desc_file))
+          if (any(suggests_line) && grepl("cmdstanr", desc_file[suggests_line])) {
+            desc_file[suggests_line] <- gsub("cmdstanr,", "", desc_file[suggests_line])
+            desc_file[suggests_line] <- gsub(",cmdstanr", "", desc_file[suggests_line])
+            desc_file[suggests_line] <- gsub("cmdstanr", "", desc_file[suggests_line])
+          }
+          
+          # Write the modified DESCRIPTION file
+          writeLines(desc_file, "DESCRIPTION")
+          
+          # Show the modified file
+          cat("Modified DESCRIPTION:\n")
+          cat(readLines("DESCRIPTION"), sep="\n")
+        shell: Rscript {0}
 
       # Install BiocManager and rhdf5 early
       - name: Install BiocManager
         run: |
           install.packages("BiocManager")
           BiocManager::install("rhdf5")
-        shell: Rscript {0}
-
-      # Completely revised cmdstanr installation approach
-      - name: Install cmdstanr with fixed version
-        run: |
-          install.packages("remotes")
-          # Using a specific stable version of cmdstanr (0.5.3) instead of the development version
-          remotes::install_github("stan-dev/cmdstanr@v0.5.3", upgrade = "never")
-          # Create required directories 
-          dir.create(Sys.getenv("R_CMDSTANR_PATH", "/home/runner/.cmdstan"), showWarnings = FALSE, recursive = TRUE)
-          # Check if cmdstan is available and install with simplified options
-          if (!cmdstanr::cmdstan_path_exists()) {
-            cmdstanr::install_cmdstan(dir = Sys.getenv("R_CMDSTANR_PATH", "/home/runner/.cmdstan"), 
-                                      cores = 2, 
-                                      quiet = TRUE,
-                                      overwrite = TRUE)
-          }
         shell: Rscript {0}
 
       # Install remaining dependencies
@@ -76,8 +121,55 @@ jobs:
             any::rmarkdown
             any::ggrepel
             any::pheatmap
-            local::.
           needs: website
+
+      # Create conditional loading files for Stan
+      - name: Create conditional loading files
+        run: |
+          # Find all R files in the package
+          r_files=$(find R -name "*.R")
+          
+          # For each file that might import cmdstanr
+          for file in $r_files; do
+            # Check if it imports cmdstanr
+            if grep -q "cmdstanr" $file; then
+              echo "Modifying $file to handle missing cmdstanr"
+              # Add conditional import at the beginning of the file
+              sed -i '1i\\n# Conditional import for cmdstanr\nif (requireNamespace("cmdstanr", quietly = TRUE)) {\n  # cmdstanr is available\n} else {\n  # cmdstanr is not available\n  warning("Some functions requiring cmdstanr will be unavailable")\n}\n' $file
+              
+              # Replace direct cmdstanr:: calls with conditional calls
+              sed -i 's/cmdstanr::/if(requireNamespace("cmdstanr", quietly = TRUE)) cmdstanr::/g' $file
+            fi
+          done
+        shell: bash
+
+      # Add a note about cmdstanr to documentation
+      - name: Create cmdstanr note
+        run: |
+          mkdir -p vignettes
+          echo "---" > vignettes/stan_note.Rmd
+          echo "title: \"Note About Stan Dependencies\"" >> vignettes/stan_note.Rmd
+          echo "output: rmarkdown::html_vignette" >> vignettes/stan_note.Rmd
+          echo "vignette: >" >> vignettes/stan_note.Rmd
+          echo "  %\\VignetteIndexEntry{Note About Stan Dependencies}" >> vignettes/stan_note.Rmd
+          echo "  %\\VignetteEngine{knitr::rmarkdown}" >> vignettes/stan_note.Rmd
+          echo "  %\\VignetteEncoding{UTF-8}" >> vignettes/stan_note.Rmd
+          echo "---" >> vignettes/stan_note.Rmd
+          echo "" >> vignettes/stan_note.Rmd
+          echo "## Important: Stan Dependencies" >> vignettes/stan_note.Rmd
+          echo "" >> vignettes/stan_note.Rmd
+          echo "This documentation site was built without including the Stan dependencies." >> vignettes/stan_note.Rmd
+          echo "" >> vignettes/stan_note.Rmd
+          echo "For full functionality of the TrajConserve package, you need to install cmdstanr and set up your environment correctly." >> vignettes/stan_note.Rmd
+          echo "" >> vignettes/stan_note.Rmd
+          echo "Please refer to the [README](https://github.com/GilbertHan1011/TrajConserve) for complete installation instructions, especially the section on Stan Setup." >> vignettes/stan_note.Rmd
+        shell: bash
+
+      # Install the local package without Stan
+      - name: Install package
+        run: |
+          install.packages(".", repos = NULL, type = "source")
+        shell: Rscript {0}
 
       - name: Build pkgdown site
         run: |

@@ -2,7 +2,7 @@ Package: TrajConserve
 Type: Package
 Title: Trajectory Conservation Analysis Tools for Single-Cell Data
 Version: 0.1.0
-Date: 2024-03-28
+Date: 2025-03-28
 Authors@R: person("Gilbert", "Han", email = "GilbertHan1011@gmail.com", role = c("aut", "cre"))
 Author: Gilbert Han [aut, cre]
 Maintainer: Gilbert Han <GilbertHan1011@gmail.com>

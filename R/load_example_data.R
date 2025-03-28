@@ -4,7 +4,7 @@
 #' It provides sample trajectory data that can be used to test the functionality
 #' of the TrajConserve package.
 #'
-#' @return A list or data frame containing trajectory data
+#' @return A Seurat object containing example trajectory data
 #' @export
 #'
 #' @examples
@@ -14,7 +14,7 @@
 #' }
 load_example_data <- function() {
   # Get the path to the example data file
-  data_path <- system.file("data", "small_example.Rds", package = "trajConserve")
+  data_path <- system.file("extdata", "small_example.Rds", package = "TrajConserve")
   
   # Check if the file exists
   if (data_path == "") {
@@ -22,5 +22,6 @@ load_example_data <- function() {
   }
   
   # Load and return the data
+  message("Loading example Seurat object with 8,000 cells and 100 genes...")
   readRDS(data_path)
 } 

@@ -5,6 +5,8 @@
 #' with a subset of cells and genes for testing package functionality. This small
 #' example contains 8,000 cells and 100 genes extracted from a tooth development dataset.
 #'
+#' The dataset can be loaded using the \code{\link{load_example_data}} function.
+#'
 #' @format A Seurat object with the following slots:
 #' \describe{
 #'   \item{assays}{Contains expression data in the 'originalexp' assay}
@@ -30,4 +32,4 @@
 #'   Seurat::DimPlot(data, reduction = "X_umap")
 #' }
 #' }
-"small_example" 
+"x" 

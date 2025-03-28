@@ -64,7 +64,8 @@ jobs:
             "doParallel",
             "progressr",
             "data.table",
-            "tools"
+            "tools",
+            "rstan"
           ))
           
           # Install packages from Bioconductor

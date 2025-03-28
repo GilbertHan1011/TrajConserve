@@ -1,0 +1,261 @@
+---
+title: "Conservation Analysis with TrajConserve"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Conservation Analysis with TrajConserve}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+# Conservation Analysis with TrajConserve
+
+This vignette focuses on the conservation analysis capabilities of the TrajConserve package. We'll explore how to identify conserved gene expression patterns across samples, batch conditions, or experimental replicates.
+
+## What is Conservation?
+
+In the context of TrajConserve, "conservation" refers to the consistency of gene expression patterns across different conditions. A gene is considered conserved if:
+
+1. It has high expression values (high mean estimate)
+2. It shows consistent expression across samples (low variability)
+
+Genes that have low expression or high variability across samples are considered non-conserved.
+
+## The Conservation Score
+
+TrajConserve quantifies conservation using a weighted score that combines two key aspects:
+
+1. **Mean Expression**: Higher mean expression contributes to a higher conservation score
+2. **Expression Variability**: Lower variability (measured by coefficient of variation) contributes to a higher conservation score
+
+The relative importance of these factors can be adjusted using weight parameters.
+
+## Computing Conservation Scores
+
+### Basic Usage
+
+```{r, eval=FALSE}
+library(TrajConserve)
+
+# Assuming you have already run models and saved results to an HDF5 file
+h5_file <- "trajectory_models.h5"
+
+# Calculate conservation scores with default parameters
+conservation_results <- calculate_conservation(
+  h5_file = h5_file,
+  metric = "Estimate"
+)
+
+# View the results
+head(conservation_results)
+```
+
+### Customizing the Analysis
+
+You can adjust several parameters to customize the conservation analysis:
+
+```{r, eval=FALSE}
+# Customize the weights and threshold
+conservation_results <- calculate_conservation(
+  h5_file = h5_file,
+  metric = "Estimate",
+  mean_weight = 0.7,           # Give more importance to mean expression
+  variability_weight = 0.3,    # Give less importance to variability
+  conservation_threshold = 0.8, # Stricter threshold for conserved genes
+  normalize_scores = TRUE      # Normalize scores to 0-1 range
+)
+```
+
+## Understanding the Results
+
+The `calculate_conservation` function returns a data frame with the following columns:
+
+- `gene`: Gene identifier
+- `mean_estimate`: Mean expression value
+- `sd_estimate`: Standard deviation of expression
+- `cv`: Coefficient of variation (sd/mean)
+- `range_estimate`: Range of expression values
+- `mean_norm`: Normalized mean value (if normalize_scores = TRUE)
+- `cv_norm`: Normalized inverse variability
+- `conservation_score`: Overall conservation score
+- `is_conserved`: Boolean indicating if the gene is conserved (based on threshold)
+
+## Visualizing Conservation
+
+### Scatter Plot
+
+The scatter plot shows the relationship between mean expression and variability:
+
+```{r, eval=FALSE}
+# Create a scatter plot
+plot_conservation(
+  conservation_results,
+  plot_type = "scatter",
+  highlight_n = 10,  # Highlight top/bottom 10 genes
+  file_path = "conservation_scatter.pdf"  # Optional: save to file
+)
+```
+
+### Histogram
+
+The histogram shows the distribution of conservation scores:
+
+```{r, eval=FALSE}
+# Create a histogram
+plot_conservation(
+  conservation_results,
+  plot_type = "histogram",
+  file_path = "conservation_histogram.pdf"
+)
+```
+
+### Heatmap
+
+For creating heatmaps, you'll need the original expression data:
+
+```{r, eval=FALSE}
+# Extract the data
+estimate_matrix <- extract_hdf5_metric(h5_file, "Estimate")
+
+# Create a heatmap
+# Note: Using pheatmap directly is recommended for complex heatmaps
+library(pheatmap)
+
+# Create annotation for conserved vs non-conserved genes
+gene_type <- ifelse(conservation_results$is_conserved, "Conserved", "Non-conserved")
+gene_anno <- data.frame(
+  Conservation = factor(gene_type, levels = c("Conserved", "Non-conserved")),
+  row.names = conservation_results$gene
+)
+
+# Define colors for annotation
+anno_colors <- list(
+  Conservation = c(Conserved = "blue", `Non-conserved` = "red")
+)
+
+# Create heatmap
+pheatmap(t(estimate_matrix), 
+         annotation_row = gene_anno,
+         annotation_colors = anno_colors,
+         main = "Expression Patterns of Conserved vs Non-conserved Genes",
+         cluster_rows = TRUE,
+         cluster_cols = TRUE)
+```
+
+## Comparing Conservation Across Different Metrics
+
+You can calculate conservation for different metrics in your HDF5 file:
+
+```{r, eval=FALSE}
+# Compare Estimate and Est.Error metrics
+estimate_conservation <- calculate_conservation(h5_file, "Estimate")
+error_conservation <- calculate_conservation(h5_file, "Est.Error")
+
+# Compare the number of conserved genes
+table(estimate_conservation$is_conserved)
+table(error_conservation$is_conserved)
+
+# Find genes conserved in both metrics
+both_conserved <- intersect(
+  estimate_conservation$gene[estimate_conservation$is_conserved],
+  error_conservation$gene[error_conservation$is_conserved]
+)
+print(both_conserved)
+```
+
+## Case Study: Finding Conserved Genes in Development
+
+Let's walk through a complete example of finding conserved genes in a developmental trajectory:
+
+```{r, eval=FALSE}
+library(TrajConserve)
+library(dplyr)
+
+# 1. Load results from HDF5 file
+h5_file <- "development_trajectory_models.h5"
+
+# 2. Calculate conservation scores
+cons_results <- calculate_conservation(
+  h5_file = h5_file,
+  mean_weight = 0.6,
+  variability_weight = 0.4,
+  conservation_threshold = 0.7
+)
+
+# 3. Analyze results
+# Number of conserved and non-conserved genes
+table(cons_results$is_conserved)
+
+# Top 10 most conserved genes
+top_conserved <- cons_results %>%
+  filter(is_conserved) %>%
+  arrange(desc(conservation_score)) %>%
+  head(10)
+
+print(top_conserved[, c("gene", "conservation_score", "mean_estimate", "cv")])
+
+# Bottom 10 least conserved genes
+least_conserved <- cons_results %>%
+  arrange(conservation_score) %>%
+  head(10)
+
+print(least_conserved[, c("gene", "conservation_score", "mean_estimate", "cv")])
+
+# 4. Visualize results
+# Scatter plot
+plot_conservation(cons_results, plot_type = "scatter", highlight_n = 15)
+
+# Extract data for heatmap
+data_matrix <- extract_hdf5_metric(h5_file, "Estimate")
+
+# Get top 20 most conserved and 20 least conserved genes
+genes_to_plot <- c(
+  cons_results$gene[order(-cons_results$conservation_score)][1:20],
+  cons_results$gene[order(cons_results$conservation_score)][1:20]
+)
+
+# Subset data
+plot_data <- data_matrix[, genes_to_plot]
+
+# Create annotation data frame
+gene_type <- rep("Non-conserved", length(genes_to_plot))
+gene_type[genes_to_plot %in% cons_results$gene[cons_results$is_conserved]] <- "Conserved"
+
+gene_anno <- data.frame(
+  Conservation = factor(gene_type, levels = c("Conserved", "Non-conserved")),
+  row.names = genes_to_plot
+)
+
+# Plot heatmap
+pheatmap(t(plot_data),
+         annotation_row = gene_anno,
+         scale = "row",
+         main = "Expression Patterns Across Samples",
+         fontsize_row = 8)
+```
+
+## Biological Interpretation
+
+When interpreting conservation results:
+
+- Highly conserved genes likely represent core biological processes that are stable across conditions
+- Non-conserved genes may indicate:
+  - Condition-specific responses
+  - Technical variability
+  - Genes undergoing dynamic changes
+  
+- Consider gene functions and pathways when interpreting conservation patterns:
+  - Housekeeping genes are often highly conserved
+  - Genes involved in stress response, immune function, or developmental transitions may show lower conservation
+
+## Conclusion
+
+Conservation analysis is a powerful tool for identifying genes with consistent expression patterns across experimental conditions. By quantifying both expression level and variability, TrajConserve provides a robust approach to finding biologically meaningful patterns in your trajectory data. 

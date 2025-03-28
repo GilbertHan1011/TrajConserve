@@ -1,76 +1,196 @@
 ---
-title: "Introduction to trajConserve"
+title: "Introduction to TrajConserve"
 author: "Gilbert Han"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction to trajConserve}
+  %\VignetteIndexEntry{Introduction to TrajConserve}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
+```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
 )
 ```
 
-## Introduction
+# TrajConserve
 
-`trajConserve` is an R package designed for analyzing trajectory conservation in single-cell data. It provides tools for:
+## Overview
 
-1. Binning and transforming pseudotime data
-2. Bayesian GAM regression modeling of expression trajectories
-3. Visualization of trajectory models and conservation patterns
+TrajConserve is an R package designed for analyzing gene expression trajectories and identifying conserved expression patterns across experimental conditions. This package implements Bayesian generalized additive models (GAMs) to model gene expression over pseudotime trajectories and provides tools for quantifying conservation of expression patterns.
 
-This vignette demonstrates the basic workflow for using the package.
+The package is particularly useful for:
+
+- Modeling expression dynamics along developmental or cell differentiation trajectories
+- Identifying genes with conserved or divergent expression patterns across conditions
+- Visualizing and comparing trajectory models
+- Storing and retrieving model results in HDF5 format
+
+## Features
+
+- **Trajectory Modeling**: Fit Bayesian GAMs to gene expression data along pseudotime trajectories.
+- **Conservation Analysis**: Quantify gene conservation based on expression levels and variability.
+- **HDF5 Integration**: Store and retrieve large model results efficiently.
+- **Visualization Tools**: Create publication-ready plots of model results and conservation metrics.
+
+## Installation
+
+You can install TrajConserve from GitHub:
+
+```{r, eval=FALSE}
+# Install devtools if you haven't already
+if (!requireNamespace("devtools", quietly = TRUE))
+  install.packages("devtools")
+
+# Install the package from GitHub
+devtools::install_github("username/TrajConserve")
+```
+
+### Dependencies
+
+TrajConserve depends on several packages, including:
+
+- **brms**: For Bayesian regression modeling via Stan
+- **rhdf5**: For HDF5 file handling
+- **ggplot2**: For visualization
+- **pheatmap**: For creating heatmaps
+- **data.table**: For efficient data manipulation
 
 ## Basic Usage
 
-### Data Preparation
+### 1. Converting Seurat data to trajectory array
 
-First, we need to prepare our data. The package expects a Seurat object with pseudotime values.
-
-```{r eval=FALSE}
-library(trajConserve)
+```{r, eval=FALSE}
+library(TrajConserve)
 library(Seurat)
 
-# Create a 3D trajectory array from a Seurat object
+# Assuming 'seurat_obj' is your Seurat object with integrated data
+# and 'pseudotime' is a column in the metadata
 trajectory_data <- seurat_to_trajectory_array(
-  seurat_obj = your_seurat_object,
-  pseudo_col = "your_pseudotime_column",
-  project_col = "your_batch_column"
+  seurat_obj = seurat_obj,
+  assay = "RNA",
+  pseudotime_col = "pseudotime",
+  batch_col = "sample_id",
+  genes = c("Gene1", "Gene2", "Gene3", "Gene4")
 )
 ```
 
-### Model Fitting
+### 2. Running trajectory models
 
-Once we have our trajectory array, we can fit Bayesian GAM models to individual genes.
-
-```{r eval=FALSE}
-# Run model for a single gene
-gene_idx <- 10  # Example gene index
-model <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx)
-
-# Visualize results
-plot_results_brms(model)
-```
-
-### Batch Processing
-
-For analyzing multiple genes, you can use the parallel processing functionality.
-
-```{r eval=FALSE}
-# Run models for multiple genes in parallel
-models <- run_multiple_models(
-  trajectory_data$reshaped_data, 
-  gene_indices = 1:20,  # First 20 genes
-  parallel = TRUE, 
+```{r, eval=FALSE}
+# Run models for multiple genes
+result <- run_multiple_models(
+  data_array = trajectory_data,
+  output_file = "trajectory_models.h5",
+  family = "negbinomial",
   n_cores = 4
 )
 ```
 
-## Conclusion
+### 3. Analyzing conservation of gene expression
 
-The `trajConserve` package provides a streamlined workflow for trajectory analysis in single-cell data. By leveraging Bayesian GAM models, it enables robust modeling of gene expression changes along developmental trajectories.
+```{r, eval=FALSE}
+# Calculate conservation scores
+conservation_results <- calculate_conservation(
+  h5_file = "trajectory_models.h5",
+  metric = "Estimate",
+  mean_weight = 0.6,
+  variability_weight = 0.4,
+  conservation_threshold = 0.7
+)
+
+# View conservation results
+head(conservation_results)
+
+# Visualize conservation metrics
+plot_conservation(conservation_results, plot_type = "scatter")
+```
+
+### 4. Extracting and visualizing metrics from HDF5 files
+
+```{r, eval=FALSE}
+# Extract Estimate values
+estimates <- extract_hdf5_metric("trajectory_models.h5", "Estimate")
+
+# Create a heatmap
+plot_hdf5_heatmap("trajectory_models.h5", "Estimate", scale = "row")
+```
+
+## Example Workflow
+
+Below is a complete workflow example from preprocessing data to analyzing conservation:
+
+```{r, eval=FALSE}
+library(TrajConserve)
+library(Seurat)
+
+# 1. Prepare data
+seurat_obj <- readRDS("your_seurat_object.rds")
+genes_of_interest <- c("Gene1", "Gene2", "Gene3", "Gene4")
+
+# 2. Convert Seurat data to trajectory array
+traj_array <- seurat_to_trajectory_array(
+  seurat_obj = seurat_obj,
+  assay = "RNA",
+  pseudotime_col = "pseudotime",
+  batch_col = "condition",
+  genes = genes_of_interest
+)
+
+# 3. Run trajectory models
+output_file <- "results/trajectory_models.h5"
+run_multiple_models(
+  data_array = traj_array,
+  output_file = output_file,
+  family = "negbinomial",
+  n_cores = 4
+)
+
+# 4. Calculate conservation scores
+conservation_results <- calculate_conservation(
+  h5_file = output_file,
+  metric = "Estimate",
+  mean_weight = 0.6,
+  variability_weight = 0.4,
+  conservation_threshold = 0.7
+)
+
+# 5. Create output directory
+output_dir <- "results/figures"
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+# 6. Visualize conservation
+# Scatter plot
+plot_conservation(
+  conservation_results,
+  plot_type = "scatter",
+  highlight_n = 10,
+  file_path = file.path(output_dir, "conservation_scatter.pdf")
+)
+
+# Histogram
+plot_conservation(
+  conservation_results,
+  plot_type = "histogram",
+  file_path = file.path(output_dir, "conservation_histogram.pdf")
+)
+
+# 7. Print top conserved genes
+top_conserved <- conservation_results[order(-conservation_results$conservation_score), ][1:10, ]
+print(top_conserved[, c("gene", "conservation_score", "is_conserved", "mean_estimate", "cv")])
+```
+
+## Advanced Topics
+
+For more advanced usage, please see the other vignettes:
+
+- [Customizing trajectory models](trajectory_modeling.html)
+- [Working with HDF5 files](hdf5_guide.html)
+- [Conservation analysis in depth](conservation_analysis.html)

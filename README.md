@@ -1,105 +1,167 @@
 # TrajConserve
 
+[![pkgdown](https://github.com/GilbertHan1011/TrajConserve/actions/workflows/pkgdown.yml/badge.svg)](https://github.com/GilbertHan1011/TrajConserve/actions/workflows/pkgdown.yml)
+[![Website](https://img.shields.io/badge/website-online-blue.svg)](https://GilbertHan1011.github.io/TrajConserve/)
+
 Trajectory Conservation Analysis Tools for Single-Cell Data
 
 ## Overview
 
-`trajConserve` is an R package designed for analyzing trajectory conservation in single-cell data. It provides tools for:
+`TrajConserve` is an R package designed for analyzing trajectory conservation in single-cell data. It enables the identification of conserved and non-conserved gene expression patterns across developmental trajectories.
 
-1. Binning and transforming pseudotime data
-2. Bayesian GAM regression modeling of expression trajectories
-3. Visualization of trajectory models and conservation patterns
+### Key Features
 
-This package is particularly useful for identifying and comparing gene expression patterns across developmental trajectories in single-cell RNA-seq data from different conditions, tissues, or species.
+1. **Trajectory Modeling**: Bayesian GAM regression modeling of expression trajectories
+2. **Conservation Analysis**: Quantify and visualize gene conservation across samples
+3. **HDF5 Integration**: Efficient storage and retrieval of model results
+4. **Visualization Tools**: Publication-ready plots of model results and conservation metrics
+
+## Documentation
+
+For detailed documentation, tutorials, and examples, visit our [website](https://GilbertHan1011.github.io/TrajConserve/).
+
+The documentation website is automatically built and deployed using GitHub Actions whenever changes are pushed to the main branch.
 
 ## Installation
 
 ```r
 # Install from GitHub
 devtools::install_github("GilbertHan1011/TrajConserve")
+```
 
+## Dependencies
 
+TrajConserve depends on several packages, including:
+
+- **brms**: For Bayesian regression modeling via Stan
+- **rhdf5**: For HDF5 file handling
+- **ggplot2**: For visualization
+
+Make sure to install these dependencies:
+
+```r
+# Install BiocManager if needed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# Install rhdf5
+BiocManager::install("rhdf5")
+
+# Install CRAN packages
+install.packages(c("brms", "ggplot2", "pheatmap", "ggrepel"))
 ```
 
 ## Quick Start
 
+### Trajectory Modeling
+
 ```r
-library(trajConserve)
+library(TrajConserve)
 
 # Convert Seurat object to 3D trajectory array
 trajectory_data <- seurat_to_trajectory_array(
   seurat_obj = your_seurat_object,
-  pseudo_col = "your_pseudotime_column",
-  project_col = "your_batch_column"
+  assay = "RNA",
+  pseudotime_col = "pseudotime",
+  batch_col = "sample_id",
+  genes = c("Gene1", "Gene2", "Gene3", "Gene4")
 )
 
-# Run model for a single gene
-gene_idx <- 10  # Example gene index
-model <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx)
-
-# Visualize results
-plot_results_brms(model)
-
-# Run multiple models in parallel
-models <- run_multiple_models(
-  trajectory_data$reshaped_data, 
-  gene_indices = 1:20,  # First 20 genes
-  parallel = TRUE, 
+# Run multiple models and save to HDF5
+run_multiple_models(
+  data_array = trajectory_data,
+  output_file = "trajectory_models.h5",
+  family = "negbinomial",
   n_cores = 4
 )
+```
 
-# Run models and save metrics, plots, and models
-models_with_saving <- run_multiple_models(
-  trajectory_data$reshaped_data,
-  gene_indices = 1:20,
-  parallel = TRUE,
-  n_cores = 4,
-  save_metrics = TRUE,
-  save_metrics_file = "output/gene_weights.h5",
-  save_plots = TRUE,
-  save_plots_dir = "output/plots",
-  save_models = TRUE,
-  save_models_dir = "output/models"
+### Conservation Analysis
+
+```r
+# Calculate conservation scores
+conservation_results <- calculate_conservation(
+  h5_file = "trajectory_models.h5",
+  metric = "Estimate",
+  mean_weight = 0.6,
+  variability_weight = 0.4,
+  conservation_threshold = 0.7
 )
 
-# Load and work with saved metrics in R
-# ```r
-# library(rhdf5)
-# # List the HDF5 file structure
-# h5ls("output/gene_weights.h5")
-# 
-# # Get the metric names
-# metrics <- h5read("output/gene_weights.h5", "metadata/metric_names")
-# 
-# # Read data for gene1
-# gene1_weights <- list()
-# gene1_weights$array <- h5read("output/gene_weights.h5", "array_weights/gene1/array")
-# 
-# # Open the file to check for existence
-# h5_file <- "output/gene_weights.h5"
-# for (metric in metrics) {
-#   metric_path <- paste0("array_weights/gene1/", metric)
-#   
-#   # Check if the metric exists for this gene using proper API
-#   # Open the file
-#   h5_fid <- H5Fopen(h5_file)
-#   metric_exists <- H5Lexists(h5_fid, metric_path)
-#   H5Fclose(h5_fid)
-#   
-#   if (metric_exists) {
-#     gene1_weights[[metric]] <- h5read(h5_file, metric_path)
-#   }
-# }
-# gene1_df <- data.frame(gene1_weights)
-# ```
+# View results
+head(conservation_results)
+
+# Create visualizations
+# Scatter plot
+plot_conservation(
+  conservation_results,
+  plot_type = "scatter",
+  highlight_n = 10,
+  file_path = "figures/conservation_scatter.pdf"
+)
+
+# Histogram
+plot_conservation(
+  conservation_results,
+  plot_type = "histogram",
+  file_path = "figures/conservation_histogram.pdf"
+)
+
+# Extract data for heatmap
+estimate_matrix <- extract_hdf5_metric("trajectory_models.h5", "Estimate")
+
+# Create heatmap using pheatmap
+library(pheatmap)
+gene_type <- ifelse(conservation_results$is_conserved, "Conserved", "Non-conserved")
+gene_anno <- data.frame(
+  Conservation = factor(gene_type, levels = c("Conserved", "Non-conserved")),
+  row.names = conservation_results$gene
+)
+
+# Create heatmap
+pheatmap(t(estimate_matrix), 
+         annotation_row = gene_anno,
+         main = "Expression Patterns of Conserved vs Non-conserved Genes")
 ```
 
 ## Key Functions
 
+**Trajectory Analysis**
 - `seurat_to_trajectory_array()`: Converts a Seurat object to a 3D trajectory array
 - `bayesian_gam_regression_nb_shape()`: Fits a Bayesian GAM model with negative binomial distribution
 - `run_multiple_models()`: Runs models for multiple genes
 - `plot_results_brms()`: Visualizes model results
+
+**Conservation Analysis**
+- `calculate_conservation()`: Calculates conservation scores for genes
+- `plot_conservation()`: Creates visualizations of conservation results
+- `extract_hdf5_metric()`: Extracts metrics from HDF5 files
+
+**HDF5 Utilities**
+- `extract_hdf5_metric()`: Extract metrics from HDF5 files
+- `plot_hdf5_heatmap()`: Create heatmaps from HDF5 data
+
+## Website Development
+
+The documentation website is automatically built and deployed using GitHub Actions whenever changes are pushed to the main branch.
+
+To build the documentation website locally for testing:
+
+```r
+# Install pkgdown if needed
+install.packages("pkgdown")
+
+# Build the site
+pkgdown::build_site()
+```
+
+Alternatively, run the included script:
+
+```bash
+Rscript build_site.R
+```
+
+The automated GitHub Actions workflow is defined in `.github/workflows/pkgdown.yml`.
 
 ## License
 

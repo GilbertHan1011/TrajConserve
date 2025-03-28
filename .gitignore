@@ -50,3 +50,6 @@ rsconnect/
 
 # macOS system files
 .DS_Store 
+
+buid_site.R
+buid_site_offline.R

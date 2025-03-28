@@ -1,0 +1,71 @@
+url: https://GilbertHan1011.github.io/TrajConserve/
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#0054AD"
+    base_font: {google: "Roboto"}
+    heading_font: {google: "Roboto Slab"}
+    code_font: {google: "Source Code Pro"}
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, tutorials, news]
+    right: [github]
+  components:
+    intro:
+      text: Introduction
+      href: articles/introduction.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/GilbertHan1011/TrajConserve
+    
+reference:
+  - title: Package
+    desc: >
+      Package documentation
+    contents:
+      - TrajConserve
+      
+  - title: Core Trajectory Functions
+    desc: >
+      Functions for trajectory modeling and conservation analysis
+    contents:
+      - seurat_to_trajectory_array
+      - bayesian_gam_regression_nb_shape
+      - run_multiple_models
+      - run_trajectory_model
+      - calculate_conservation
+      
+  - title: Visualization Functions
+    desc: >
+      Functions for visualizing results
+    contents:
+      - plot_results_brms
+      - plot_conservation
+      - plot_hdf5_heatmap
+      
+  - title: HDF5 Utilities
+    desc: >
+      Functions for working with HDF5 files
+    contents:
+      - extract_hdf5_metric
+      
+  - title: Helper Functions
+    desc: >
+      Utility functions
+    contents:
+      - prepare_data_for_gam
+      - bin_pseudotime
+      - calculate_bin_means
+      - reshape_to_3d
+      - examine_trajectory_tail
+
+home:
+  sidebar:
+    structure: [links, license, community, citation, authors, dev]
+    components:
+      citation:
+        title: Citation
+        text: >
+          If you use this package, please cite it using the following format. 

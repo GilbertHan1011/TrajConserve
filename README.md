@@ -53,30 +53,12 @@ install.packages(c("brms", "ggplot2", "pheatmap", "ggrepel"))
 
 ### Stan Setup (Important)
 
-TrajConserve uses Stan (via cmdstanr) for Bayesian modeling. To avoid C++ compilation issues, configure your environment:
+TrajConserve uses Stan for Bayesian modeling. By default, it uses the rstan backend, but for optimal performance, we strongly recommend installing and configuring cmdstanr:
 
 ```r
-# Install cmdstanr
-install.packages("remotes")
-remotes::install_github("stan-dev/cmdstanr")
+# Install cmdstanr from Stan R-universe (recommended method)
+install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 
-# Create necessary configuration files
-# 1. Configure C++ compiler settings in ~/.R/Makevars
-dir.create(file.path(Sys.getenv("HOME"), ".R"), showWarnings = FALSE)
-cat('CXX14 = g++
-CXX17 = g++
-CXX14FLAGS = -O3 -march=native -mtune=native -fPIC
-CXX17FLAGS = -O3 -march=native -mtune=native -fPIC
-STAN_CXX17 = TRUE
-STAN_HAS_CXX17 = TRUE
-TBB_CXX_TYPE = gcc', 
-file = file.path(Sys.getenv("HOME"), ".R", "Makevars"))
-
-# 2. Configure cmdstan make settings
-dir.create(file.path(Sys.getenv("HOME"), ".cmdstan", "make"), recursive = TRUE, showWarnings = FALSE)
-cat('STAN_HAS_CXX17 = true
-TBB_CXX_TYPE = gcc', 
-file = file.path(Sys.getenv("HOME"), ".cmdstan", "make", "local"))
 
 # Install cmdstan
 cmdstanr::check_cmdstan_toolchain(fix = TRUE)
@@ -84,7 +66,7 @@ options(timeout = 600)  # Set a longer timeout for downloading
 cmdstanr::install_cmdstan(cores = 2)
 ```
 
-These settings ensure Stan can properly compile with your C++ environment. Without this configuration, you might encounter errors related to C++17 detection and TBB_CXX_TYPE settings.
+These settings ensure Stan can properly compile with your C++ environment. After installing cmdstanr, you can use it by setting `backend = "cmdstanr"` in the modeling functions. Without the above configuration, you might encounter errors related to C++17 detection and TBB_CXX_TYPE settings.
 
 ## Quick Start
 
@@ -103,6 +85,7 @@ trajectory_data <- seurat_to_trajectory_array(
 )
 
 # Run multiple models and save to HDF5
+# Using default rstan backend
 run_multiple_models(
   data_array = trajectory_data$reshaped_data,
   gene_indices = 1:20,
@@ -112,6 +95,18 @@ run_multiple_models(
   save_metrics_file = "trajectory_models.h5",
   save_plots = TRUE
 )
+
+# Or, if cmdstanr is installed, you can use it for better performance:
+# run_multiple_models(
+#   data_array = trajectory_data$reshaped_data,
+#   gene_indices = 1:20,
+#   parallel = TRUE,
+#   n_cores = 4,
+#   save_metrics = TRUE,
+#   save_metrics_file = "trajectory_models.h5",
+#   save_plots = TRUE,
+#   backend = "cmdstanr"
+# )
 ```
 
 ### Conservation Analysis

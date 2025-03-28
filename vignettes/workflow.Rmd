@@ -51,12 +51,15 @@ install.packages(c("brms", "ggplot2", "pheatmap", "ggrepel"))
 
 ### Setting up Stan (Important!)
 
-TrajConserve relies on Stan for Bayesian modeling. To avoid compilation issues, you need to set up your environment correctly:
+TrajConserve relies on Stan for Bayesian modeling. By default, it uses the rstan backend, but for optimal performance, we strongly recommend installing and configuring cmdstanr:
 
 ```{r setup_stan, eval=FALSE}
-# Install cmdstanr
-install.packages("remotes")
-remotes::install_github("stan-dev/cmdstanr")
+# Install cmdstanr from Stan R-universe (recommended method)
+install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
+
+# Alternatively, install from GitHub
+# install.packages("remotes")
+# remotes::install_github("stan-dev/cmdstanr")
 
 # Configure C++ compiler settings for Stan
 # Create/edit ~/.R/Makevars
@@ -81,17 +84,8 @@ options(timeout = 600)  # Set a longer timeout for downloading
 cmdstanr::install_cmdstan(cores = 2,overwrite=TRUE)
 ```
 
-These settings ensure that Stan can properly compile with your C++ toolchain. Without these configurations, you might encounter errors like:
+These settings ensure that Stan can properly compile with your C++ toolchain. After installing cmdstanr, you can use it by setting `backend = "cmdstanr"` in the modeling functions. Without these configurations, you might encounter errors like:
 
-```
-Error in `(function (command = NULL, args = character(), error_on_status = TRUE, …`:
-! System command 'make' failed
----
-Exit status: 2
-Stderr:
-stan/lib/stan_math/make/compiler_flags:145: "Stan cannot detect if your compiler has the C++17 standard."
-stan/lib/stan_math/make/libraries:114: *** "Need to set TBB_CXX_TYPE for non-standard compiler."
-```
 
 ## Load Required Packages
 

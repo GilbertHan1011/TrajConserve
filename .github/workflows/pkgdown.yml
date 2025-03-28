@@ -13,6 +13,8 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # Add environment variables to prevent cmdstanr path issues
+      R_CMDSTANR_PATH: "/home/runner/.cmdstan"
     steps:
       - uses: actions/checkout@v3
 
@@ -48,14 +50,21 @@ jobs:
           BiocManager::install("rhdf5")
         shell: Rscript {0}
 
-      # Install cmdstanr with proper settings
-      - name: Install cmdstanr
+      # Completely revised cmdstanr installation approach
+      - name: Install cmdstanr with fixed version
         run: |
           install.packages("remotes")
-          remotes::install_github("stan-dev/cmdstanr", INSTALL_opts = "--no-multiarch")
-          options(timeout = 600)
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2, overwrite = TRUE, quiet = FALSE)
+          # Using a specific stable version of cmdstanr (0.5.3) instead of the development version
+          remotes::install_github("stan-dev/cmdstanr@v0.5.3", upgrade = "never")
+          # Create required directories 
+          dir.create(Sys.getenv("R_CMDSTANR_PATH", "/home/runner/.cmdstan"), showWarnings = FALSE, recursive = TRUE)
+          # Check if cmdstan is available and install with simplified options
+          if (!cmdstanr::cmdstan_path_exists()) {
+            cmdstanr::install_cmdstan(dir = Sys.getenv("R_CMDSTANR_PATH", "/home/runner/.cmdstan"), 
+                                      cores = 2, 
+                                      quiet = TRUE,
+                                      overwrite = TRUE)
+          }
         shell: Rscript {0}
 
       # Install remaining dependencies

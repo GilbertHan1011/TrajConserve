@@ -17,7 +17,7 @@ run_multiple_models(
   save_plots_dir = "model_plots",
   save_models = FALSE,
   save_models_dir = "model_files",
-  backend = "cmdstanr"
+  backend = "rstan"
 )
 }
 \arguments{

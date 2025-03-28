@@ -17,7 +17,6 @@
 #'
 #' @import brms
 #' @import dplyr
-#' @import cmdstanr
 #' @importFrom mgcv gam
 #' @importFrom stats var
 #' @export

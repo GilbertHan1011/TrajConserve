@@ -9,7 +9,7 @@ run_trajectory_model(
   gene_index,
   n_knots = 5,
   n_samples = 2000,
-  backend = "cmdstanr"
+  backend = "rstan"
 )
 }
 \arguments{

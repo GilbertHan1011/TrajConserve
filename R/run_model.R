@@ -11,7 +11,7 @@
 #' @return A fitted model object from \code{bayesian_gam_regression_nb_shape}
 #'
 #' @export
-run_trajectory_model <- function(data_array, gene_index, n_knots = 5, n_samples = 2000, backend = "cmdstanr") {
+run_trajectory_model <- function(data_array, gene_index, n_knots = 5, n_samples = 2000, backend = "rstan") {
   # Extract data for the gene
   data_for_model <- prepare_data_for_gam(data_array[,,gene_index])
   
@@ -91,7 +91,7 @@ run_multiple_models <- function(data_array, gene_indices = NULL, n_knots = 5, n_
                                 save_metrics = FALSE, save_metrics_file = "model_metrics.h5",
                                 save_plots = FALSE, save_plots_dir = "model_plots",
                                 save_models = FALSE, save_models_dir = "model_files",
-                                backend = "cmdstanr") {
+                                backend = "rstan") {
   # If gene_indices is NULL, use all genes
   if (is.null(gene_indices)) {
     gene_indices <- 1:dim(data_array)[3]
@@ -145,7 +145,13 @@ run_multiple_models <- function(data_array, gene_indices = NULL, n_knots = 5, n_
     
     if (parallel && n_cores > 1) {
       # Parallel execution
-      results <- foreach::foreach(i = seq_along(gene_indices), .packages = c("brms", "dplyr", "cmdstanr", "grDevices", "tools")) %dopar% {
+      # Create package list based on backend
+      packages_list <- c("brms", "dplyr", "grDevices", "tools")
+      if (backend == "cmdstanr" && requireNamespace("cmdstanr", quietly = TRUE)) {
+        packages_list <- c(packages_list, "cmdstanr")
+      }
+      
+      results <- foreach::foreach(i = seq_along(gene_indices), .packages = packages_list) %dopar% {
         tryCatch({
           gene_idx <- gene_indices[i]
           gene_name <- gene_names[i]

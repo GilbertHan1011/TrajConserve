@@ -57,28 +57,7 @@ TrajConserve relies on Stan for Bayesian modeling. By default, it uses the rstan
 # Install cmdstanr from Stan R-universe (recommended method)
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 
-# Alternatively, install from GitHub
-# install.packages("remotes")
-# remotes::install_github("stan-dev/cmdstanr")
 
-# Configure C++ compiler settings for Stan
-# Create/edit ~/.R/Makevars
-cat('CXX14 = g++
-CXX17 = g++
-CXX14FLAGS = -O3 -march=native -mtune=native -fPIC
-CXX17FLAGS = -O3 -march=native -mtune=native -fPIC
-STAN_CXX17 = TRUE
-STAN_HAS_CXX17 = TRUE
-TBB_CXX_TYPE = gcc', 
-file = file.path(Sys.getenv("HOME"), ".R", "Makevars"))
-
-# Create/edit ~/.cmdstan/make/local
-dir.create(file.path(Sys.getenv("HOME"), ".cmdstan", "make"), recursive = TRUE, showWarnings = FALSE)
-cat('STAN_HAS_CXX17 = true
-TBB_CXX_TYPE = gcc', 
-file = file.path(Sys.getenv("HOME"), ".cmdstan", "make", "local"))
-
-# Install cmdstan
 cmdstanr::check_cmdstan_toolchain(fix = TRUE)
 options(timeout = 600)  # Set a longer timeout for downloading
 cmdstanr::install_cmdstan(cores = 2,overwrite=TRUE)
@@ -145,7 +124,7 @@ Before running models on multiple genes, it's often helpful to test with a singl
 gene_idx <- 10  # Example gene index
 
 # Run a test model for one gene
-model_test <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx)
+model_test <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx,backend = "cmdstanr")
 
 # Visualize the model results
 plot_results_brms(model_test)
@@ -168,6 +147,7 @@ TrajConserve::run_multiple_models(
   gene_indices = 1:20,      # First 20 genes (adjust as needed)
   parallel = TRUE,
   n_cores = 4,              # Adjust based on your computing resources
+  backend = "cmdstanr",
   save_metrics = TRUE,
   save_metrics_file = paste0(savedir, "test1.hdf5"),
   save_plots = TRUE,

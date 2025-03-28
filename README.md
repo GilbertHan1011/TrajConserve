@@ -1,4 +1,4 @@
-# trajConserve
+# TrajConserve
 
 Trajectory Conservation Analysis Tools for Single-Cell Data
 
@@ -16,10 +16,9 @@ This package is particularly useful for identifying and comparing gene expressio
 
 ```r
 # Install from GitHub
-# devtools::install_github("yourusername/trajConserve")
+# devtools::install_github("GilbertHan1011/TrajConserve")
 
-# Or install from local source
-# install.packages("path/to/trajConserve", repos = NULL, type = "source")
+
 ```
 
 ## Quick Start

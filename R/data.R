@@ -31,5 +31,4 @@
 #' if (require("Seurat")) {
 #'   Seurat::DimPlot(data, reduction = "X_umap")
 #' }
-#' }
-"x" 
+#' } 

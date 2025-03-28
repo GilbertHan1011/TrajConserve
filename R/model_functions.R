@@ -30,7 +30,7 @@ bayesian_gam_regression_nb_shape <- function(x, y, array_idx, n_knots = 5, n_sam
 
   # Define formula with array-specific shape parameters
   formula <- brms::bf(
-    y ~ s(x, bs = "cr", k = 5) + array,
+    paste("y ~ s(x, bs = 'cr', k = ", n_knots, ") + array"),
     shape ~ 0 + array  # shape parameter varies by array
   )
 

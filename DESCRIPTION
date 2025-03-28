@@ -1,4 +1,4 @@
-Package: trajConserve
+Package: TrajConserve
 Type: Package
 Title: Trajectory Conservation Analysis Tools for Single-Cell Data
 Version: 0.1.0
@@ -25,14 +25,18 @@ Imports:
     Seurat,
     gridExtra,
     ggplot2,
-    dplyr
+    dplyr,
+    grDevices,
+    tools
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    tidyverse
+    tidyverse,
+    rhdf5,
+    pheatmap
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
-URL: https://github.com/zhang-lab/trajConserve
-BugReports: https://github.com/zhang-lab/trajConserve/issues
+URL: https://github.com/GilbertHan1011/TrajConserve
+BugReports: https://github.com/GilbertHan1011/TrajConserve/issues

@@ -10,7 +10,13 @@ run_multiple_models(
   n_knots = 5,
   n_samples = 2000,
   parallel = FALSE,
-  n_cores = 1
+  n_cores = 1,
+  save_metrics = FALSE,
+  save_metrics_file = "model_metrics.h5",
+  save_plots = FALSE,
+  save_plots_dir = "model_plots",
+  save_models = FALSE,
+  save_models_dir = "model_files"
 )
 }
 \arguments{
@@ -25,6 +31,18 @@ run_multiple_models(
 \item{parallel}{Whether to run in parallel (default: FALSE)}
 
 \item{n_cores}{Number of cores to use for parallel processing (default: 1)}
+
+\item{save_metrics}{Whether to save the array weights to an HDF5 file (default: FALSE)}
+
+\item{save_metrics_file}{File path to save metrics in HDF5 format (default: "model_metrics.h5")}
+
+\item{save_plots}{Whether to save plot results as PDF files (default: FALSE)}
+
+\item{save_plots_dir}{Directory to save plot PDFs (default: "model_plots")}
+
+\item{save_models}{Whether to save the models to a directory (default: FALSE)}
+
+\item{save_models_dir}{Directory to save model files (default: "model_files")}
 }
 \value{
 A list of fitted model objects

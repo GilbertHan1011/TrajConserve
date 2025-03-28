@@ -1,0 +1,57 @@
+Examining HDF5 file structure...
+                  group          name       otype dclass dim
+0                     / array_weights   H5I_GROUP           
+1        /array_weights         gene1   H5I_GROUP           
+2  /array_weights/gene1     Est.Error H5I_DATASET  FLOAT   3
+3  /array_weights/gene1      Estimate H5I_DATASET  FLOAT   3
+4  /array_weights/gene1         array H5I_DATASET STRING   3
+5        /array_weights         gene2   H5I_GROUP           
+6  /array_weights/gene2     Est.Error H5I_DATASET  FLOAT   3
+7  /array_weights/gene2      Estimate H5I_DATASET  FLOAT   3
+8  /array_weights/gene2         array H5I_DATASET STRING   3
+9        /array_weights         gene3   H5I_GROUP           
+10 /array_weights/gene3     Est.Error H5I_DATASET  FLOAT   3
+11 /array_weights/gene3      Estimate H5I_DATASET  FLOAT   3
+12 /array_weights/gene3         array H5I_DATASET STRING   3
+13       /array_weights         gene4   H5I_GROUP           
+14 /array_weights/gene4     Est.Error H5I_DATASET  FLOAT   3
+15 /array_weights/gene4      Estimate H5I_DATASET  FLOAT   3
+16 /array_weights/gene4         array H5I_DATASET STRING   3
+17                    /      metadata   H5I_GROUP           
+18            /metadata  metric_names H5I_DATASET STRING   4
+
+Genes found in the HDF5 file: gene1, gene2, gene3, gene4 
+
+Metadata group exists
+Available metrics: Estimate, Est.Error, Q2.5, Q97.5 
+
+Examining gene: gene1 
+                 group      name       otype dclass dim
+2 /array_weights/gene1 Est.Error H5I_DATASET  FLOAT   3
+3 /array_weights/gene1  Estimate H5I_DATASET  FLOAT   3
+4 /array_weights/gene1     array H5I_DATASET STRING   3
+Array names: batch1, batch2, batch3 
+Estimate values: 2.87577520124614, 7.88305135443807, 4.089769218117 
+
+Testing _hdf5_metric function...
+Extract function returned a matrix with 3 rows and 4 columns
+Matrix rownames (batches/groups): batch1, batch2, batch3 
+Matrix colnames (genes): gene1, gene2, gene3, gene4 
+Full matrix values:
+          gene1    gene2    gene3    gene4
+batch1 2.875775 5.281055 6.775706 3.279207
+batch2 7.883051 8.924190 5.726334 9.545036
+batch3 4.089769 5.514350 1.029247 8.895393
+
+Est.Error matrix:
+          gene1     gene2      gene3    gene4
+batch1 1.766035 0.9132295 1.79964994 1.385607
+batch2 1.880935 1.9136667 0.49217547 1.281014
+batch3 0.091113 0.9066683 0.08411907 1.988540
+Extract function tests passed!
+
+Testing plot_hdf5_heatmap function...
+Heatmap created and saved to data/hdf5_heatmap_test_verbose.pdf 
+Heatmap function test passed!
+
+All tests completed!

@@ -29,7 +29,7 @@ In the context of TrajConserve, "conservation" refers to the consistency of gene
 
 Genes that have low expression or high variability across samples are considered non-conserved.
 
-## The Conservation Score
+## The Conservation Score 
 
 TrajConserve quantifies conservation using a weighted score that combines two key aspects:
 

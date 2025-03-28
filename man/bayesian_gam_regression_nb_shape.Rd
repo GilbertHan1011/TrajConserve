@@ -10,7 +10,8 @@ bayesian_gam_regression_nb_shape(
   y,
   array_idx,
   n_knots = 5,
-  n_samples = 2000
+  n_samples = 2000,
+  backend = "rstan"
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ bayesian_gam_regression_nb_shape(
 \item{n_knots}{Number of knots for the cubic regression spline (default: 5)}
 
 \item{n_samples}{Number of MCMC samples (default: 2000)}
+
+\item{backend}{Backend to use for Stan models ("rstan" or "cmdstanr", defaults to "rstan")}
 }
 \value{
 A list containing:

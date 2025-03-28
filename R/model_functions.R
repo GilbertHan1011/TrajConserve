@@ -7,6 +7,7 @@
 #' @param array_idx Vector of array/batch identifiers
 #' @param n_knots Number of knots for the cubic regression spline (default: 5)
 #' @param n_samples Number of MCMC samples (default: 2000)
+#' @param backend Backend to use for Stan models ("rstan" or "cmdstanr", defaults to "rstan")
 #'
 #' @return A list containing:
 #'   \item{fit}{The fitted brms model object}
@@ -20,7 +21,13 @@
 #' @importFrom mgcv gam
 #' @importFrom stats var
 #' @export
-bayesian_gam_regression_nb_shape <- function(x, y, array_idx, n_knots = 5, n_samples = 2000) {
+bayesian_gam_regression_nb_shape <- function(x, y, array_idx, n_knots = 5, n_samples = 2000, backend = "rstan") {
+  # Check if cmdstanr is requested but not available
+  if (backend == "cmdstanr" && !requireNamespace("cmdstanr", quietly = TRUE)) {
+    warning("cmdstanr backend requested but package not available. Falling back to rstan backend.")
+    backend <- "rstan"
+  }
+  
   # Create data frame
   df <- data.frame(
     y = round(y[!is.na(y)]),  # ensure integers
@@ -50,7 +57,7 @@ bayesian_gam_regression_nb_shape <- function(x, y, array_idx, n_knots = 5, n_sam
     chains = 4,
     cores = 4,
     iter = n_samples,
-    backend = "cmdstanr",
+    backend = backend,
     control = list(
       adapt_delta = 0.95,
       max_treedepth = 12

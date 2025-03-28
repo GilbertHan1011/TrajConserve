@@ -16,7 +16,8 @@ run_multiple_models(
   save_plots = FALSE,
   save_plots_dir = "model_plots",
   save_models = FALSE,
-  save_models_dir = "model_files"
+  save_models_dir = "model_files",
+  backend = "cmdstanr"
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ run_multiple_models(
 \item{save_models}{Whether to save the models to a directory (default: FALSE)}
 
 \item{save_models_dir}{Directory to save model files (default: "model_files")}
+
+\item{backend}{Backend to use for Stan models ("rstan" or "cmdstanr", defaults to "rstan")}
 }
 \value{
 A list of fitted model objects

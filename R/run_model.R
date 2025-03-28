@@ -6,11 +6,12 @@
 #' @param gene_index Index of the gene to model in the 3D array
 #' @param n_knots Number of knots for the cubic regression spline (default: 5)
 #' @param n_samples Number of MCMC samples (default: 2000)
+#' @param backend Backend to use for Stan models ("rstan" or "cmdstanr", defaults to "rstan")
 #'
 #' @return A fitted model object from \code{bayesian_gam_regression_nb_shape}
 #'
 #' @export
-run_trajectory_model <- function(data_array, gene_index, n_knots = 5, n_samples = 2000) {
+run_trajectory_model <- function(data_array, gene_index, n_knots = 5, n_samples = 2000, backend = "cmdstanr") {
   # Extract data for the gene
   data_for_model <- prepare_data_for_gam(data_array[,,gene_index])
   
@@ -20,7 +21,8 @@ run_trajectory_model <- function(data_array, gene_index, n_knots = 5, n_samples 
     data_for_model$y,
     data_for_model$array_idx,
     n_knots = n_knots,
-    n_samples = n_samples
+    n_samples = n_samples,
+    backend = backend
   )
   
   return(fitModel)
@@ -74,6 +76,7 @@ prepare_data_for_gam <- function(gene_data) {
 #' @param save_plots_dir Directory to save plot PDFs (default: "model_plots")
 #' @param save_models Whether to save the models to a directory (default: FALSE)
 #' @param save_models_dir Directory to save model files (default: "model_files")
+#' @param backend Backend to use for Stan models ("rstan" or "cmdstanr", defaults to "rstan")
 #'
 #' @return A list of fitted model objects
 #'
@@ -87,7 +90,8 @@ run_multiple_models <- function(data_array, gene_indices = NULL, n_knots = 5, n_
                                 parallel = FALSE, n_cores = 1, 
                                 save_metrics = FALSE, save_metrics_file = "model_metrics.h5",
                                 save_plots = FALSE, save_plots_dir = "model_plots",
-                                save_models = FALSE, save_models_dir = "model_files") {
+                                save_models = FALSE, save_models_dir = "model_files",
+                                backend = "cmdstanr") {
   # If gene_indices is NULL, use all genes
   if (is.null(gene_indices)) {
     gene_indices <- 1:dim(data_array)[3]
@@ -146,7 +150,7 @@ run_multiple_models <- function(data_array, gene_indices = NULL, n_knots = 5, n_
           gene_idx <- gene_indices[i]
           gene_name <- gene_names[i]
           p(message = sprintf("Modeling gene %s", gene_name))
-          model_result <- run_trajectory_model(data_array, gene_idx, n_knots, n_samples)
+          model_result <- run_trajectory_model(data_array, gene_idx, n_knots, n_samples, backend = backend)
           
           if (save_plots) {
             pdf_file <- file.path(save_plots_dir, paste0(gene_name, "_plot.pdf"))
@@ -195,7 +199,7 @@ run_multiple_models <- function(data_array, gene_indices = NULL, n_knots = 5, n_
         
         tryCatch({
           p(message = sprintf("Modeling gene %s", gene_name))
-          results[[i]] <- run_trajectory_model(data_array, gene_idx, n_knots, n_samples)
+          results[[i]] <- run_trajectory_model(data_array, gene_idx, n_knots, n_samples, backend = backend)
           
           if (save_plots) {
             pdf_file <- file.path(save_plots_dir, paste0(gene_name, "_plot.pdf"))

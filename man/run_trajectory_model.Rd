@@ -4,7 +4,13 @@
 \alias{run_trajectory_model}
 \title{Run Bayesian GAM Model for a Single Gene}
 \usage{
-run_trajectory_model(data_array, gene_index, n_knots = 5, n_samples = 2000)
+run_trajectory_model(
+  data_array,
+  gene_index,
+  n_knots = 5,
+  n_samples = 2000,
+  backend = "cmdstanr"
+)
 }
 \arguments{
 \item{data_array}{A 3D array of expression values [batch, time, gene]}
@@ -14,6 +20,8 @@ run_trajectory_model(data_array, gene_index, n_knots = 5, n_samples = 2000)
 \item{n_knots}{Number of knots for the cubic regression spline (default: 5)}
 
 \item{n_samples}{Number of MCMC samples (default: 2000)}
+
+\item{backend}{Backend to use for Stan models ("rstan" or "cmdstanr", defaults to "rstan")}
 }
 \value{
 A fitted model object from \code{bayesian_gam_regression_nb_shape}

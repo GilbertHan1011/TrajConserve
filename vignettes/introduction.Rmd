@@ -1,0 +1,76 @@
+---
+title: "Introduction to trajConserve"
+author: "Gilbert Han"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to trajConserve}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+`trajConserve` is an R package designed for analyzing trajectory conservation in single-cell data. It provides tools for:
+
+1. Binning and transforming pseudotime data
+2. Bayesian GAM regression modeling of expression trajectories
+3. Visualization of trajectory models and conservation patterns
+
+This vignette demonstrates the basic workflow for using the package.
+
+## Basic Usage
+
+### Data Preparation
+
+First, we need to prepare our data. The package expects a Seurat object with pseudotime values.
+
+```{r eval=FALSE}
+library(trajConserve)
+library(Seurat)
+
+# Create a 3D trajectory array from a Seurat object
+trajectory_data <- seurat_to_trajectory_array(
+  seurat_obj = your_seurat_object,
+  pseudo_col = "your_pseudotime_column",
+  project_col = "your_batch_column"
+)
+```
+
+### Model Fitting
+
+Once we have our trajectory array, we can fit Bayesian GAM models to individual genes.
+
+```{r eval=FALSE}
+# Run model for a single gene
+gene_idx <- 10  # Example gene index
+model <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx)
+
+# Visualize results
+plot_results_brms(model)
+```
+
+### Batch Processing
+
+For analyzing multiple genes, you can use the parallel processing functionality.
+
+```{r eval=FALSE}
+# Run models for multiple genes in parallel
+models <- run_multiple_models(
+  trajectory_data$reshaped_data, 
+  gene_indices = 1:20,  # First 20 genes
+  parallel = TRUE, 
+  n_cores = 4
+)
+```
+
+## Conclusion
+
+The `trajConserve` package provides a streamlined workflow for trajectory analysis in single-cell data. By leveraging Bayesian GAM models, it enables robust modeling of gene expression changes along developmental trajectories.

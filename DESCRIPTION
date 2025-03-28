@@ -1,0 +1,38 @@
+Package: trajConserve
+Type: Package
+Title: Trajectory Conservation Analysis Tools for Single-Cell Data
+Version: 0.1.0
+Date: 2024-03-28
+Authors@R: person("Gilbert", "Han", email = "GilbertHan1011@gmail.com", role = c("aut", "cre"))
+Author: Gilbert Han [aut, cre]
+Maintainer: Gilbert Han <GilbertHan1011@gmail.com>
+Description: Tools for analyzing trajectory conservation in single-cell data. This package 
+    provides functions for Bayesian GAM regression modeling of expression trajectories, 
+    pseudotime binning and transformation, and visualization of trajectory models. It enables 
+    the identification and comparison of gene expression patterns across developmental 
+    trajectories in single-cell RNA-seq data from different conditions, tissues, or species.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    brms,
+    mgcv,
+    cmdstanr,
+    foreach,
+    doParallel,
+    progressr,
+    data.table,
+    Seurat,
+    gridExtra,
+    ggplot2,
+    dplyr
+Suggests: 
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    tidyverse
+Config/testthat/edition: 3
+RoxygenNote: 7.3.2
+VignetteBuilder: knitr
+URL: https://github.com/zhang-lab/trajConserve
+BugReports: https://github.com/zhang-lab/trajConserve/issues

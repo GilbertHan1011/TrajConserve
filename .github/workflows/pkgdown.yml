@@ -82,13 +82,15 @@ jobs:
         shell: bash
 
       # Build and install the package using R CMD methods
-      - name: Build and install package
+      - name: Build package tarball
         run: |
-          # Build the package tarball
           R CMD build .
-          
+        shell: bash
+
+      - name: Install built package
+        run: |
           # Get the tarball filename
-          PKG_TARBALL=$(ls -1t *.tar.gz | head -n 1)
+          PKG_TARBALL <- list.files(pattern = "\\.tar\\.gz$", full.names = TRUE)[1]
           
           # Install the built package
           install.packages(PKG_TARBALL, repos = NULL, type = "source")

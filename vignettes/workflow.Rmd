@@ -70,7 +70,7 @@ These settings ensure that Stan can properly compile with your C++ toolchain. Af
 
 Start by loading the necessary packages:
 
-```{r load_packages}
+```{r load_packages,eval=FALSE}
 library(TrajConserve)
 library(Seurat)
 library(ggplot2)
@@ -81,9 +81,9 @@ library(rhdf5)
 
 First, we load a prepared Seurat object containing single-cell data with pseudotime information:
 
-```{r load_data}
-# Load example Seurat object
-small_epi <- readRDS("data/small_example.Rds")
+```{r load_data,eval=FALSE}
+# Load example data from the package
+small_epi <- TrajConserve::load_example_data()
 
 # Examine the structure
 small_epi
@@ -98,7 +98,7 @@ The Seurat object should contain:
 
 Next, we convert the Seurat object to a format suitable for trajectory modeling:
 
-```{r trajectory_array}
+```{r trajectory_array,eval=FALSE}
 trajectory_data <- seurat_to_trajectory_array(
   seurat_obj = small_epi,
   assay = "originalexp",      # Assay containing expression data
@@ -119,12 +119,12 @@ The `seurat_to_trajectory_array` function creates:
 
 Before running models on multiple genes, it's often helpful to test with a single gene:
 
-```{r test_model}
+```{r test_model,eval=FALSE}
 # Select a gene index to test
 gene_idx <- 10  # Example gene index
 
 # Run a test model for one gene
-model_test <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx,backend = "cmdstanr")
+model_test <- run_trajectory_model(trajectory_data$reshaped_data, gene_idx)
 
 # Visualize the model results
 plot_results_brms(model_test)
@@ -136,10 +136,9 @@ This creates a test model for one gene and visualizes the trajectory across samp
 
 For comprehensive analysis, we run models for multiple genes in parallel:
 
-```{r run_multiple, eval=FALSE}
+```{r run_multiple,eval=FALSE}
 # Define output directory
-savedir <- "results/"
-dir.create(savedir, showWarnings = FALSE)
+savedir <- "./"
 
 # Run models for multiple genes
 TrajConserve::run_multiple_models(
@@ -147,12 +146,12 @@ TrajConserve::run_multiple_models(
   gene_indices = 1:20,      # First 20 genes (adjust as needed)
   parallel = TRUE,
   n_cores = 4,              # Adjust based on your computing resources
-  backend = "cmdstanr",
-  save_metrics = TRUE,
+  backend = "rstan",        # cmdstanr is highly recomendded
+  save_metrics = FALSE,
   save_metrics_file = paste0(savedir, "test1.hdf5"),
-  save_plots = TRUE,
+  save_plots = FALSE,
   save_plots_dir = savedir,
-  save_models = TRUE,
+  save_models = FALSE,
   save_models_dir = savedir
 )
 ```
@@ -168,7 +167,7 @@ This process:
 
 After model fitting, we can examine the saved results:
 
-```{r examine_hdf5, eval=FALSE}
+```{r examine_hdf5,eval=FALSE}
 # Open the HDF5 file
 h5_file <- paste0(savedir, "test1.hdf5")
 h5_test <- rhdf5::H5Fopen(h5_file)
@@ -194,9 +193,9 @@ The HDF5 file contains various metrics from our models, including:
 
 TrajConserve provides functions to extract metrics and visualize results:
 
-```{r extract_metrics, eval=FALSE}
+```{r extract_metrics,eval=FALSE}
 # Extract metrics from the HDF5 file
-metric <- TrajConserve::extract_hdf5_metric(paste0(savedir, "test1.hdf5"))
+metric <- TrajConserve::extract_hdf5_metric(paste0(savedir,"test1.hdf5"))
 
 # Examine the extracted metrics
 dim(metric)
@@ -212,10 +211,10 @@ The `extract_hdf5_metric` function retrieves a specific metric from the HDF5 fil
 
 Finally, we calculate conservation scores to identify conserved genes:
 
-```{r conservation, eval=FALSE}
+```{r conservation,eval=FALSE}
 # Calculate conservation scores
 conservation_results <- TrajConserve::calculate_conservation(
-  paste0(savedir, "test1.hdf5"),
+  paste0(savedir,"test1.hdf5"),
   metric = "Estimate",
   mean_weight = 0.6,
   variability_weight = 0.4,
@@ -239,7 +238,7 @@ plot_conservation(
 plot_conservation(
   conservation_results,
   plot_type = "histogram",
-  file_path = paste0(savedir, "conservation_histogram.pdf")
+  file_path = paste0(savedir,"conservation_histogram.pdf")
 )
 ```
 
@@ -252,12 +251,12 @@ The conservation analysis:
 
 For publication-quality visualizations, we can combine conservation results with expression patterns:
 
-```{r advanced_viz, eval=FALSE}
+```{r advanced_viz,eval=FALSE}
 # Create a heatmap with gene conservation annotation
 library(pheatmap)
 
 # Extract estimate matrix
-estimate_matrix <- extract_hdf5_metric(paste0(savedir, "test1.hdf5"), "Estimate")
+estimate_matrix <- extract_hdf5_metric( paste0(savedir,"test1.hdf5"), "Estimate")
 
 # Create annotation data frame
 gene_type <- ifelse(conservation_results$is_conserved, "Conserved", "Non-conserved")
@@ -270,7 +269,7 @@ gene_anno <- data.frame(
 pheatmap(t(estimate_matrix), 
          annotation_row = gene_anno,
          main = "Expression Patterns of Conserved vs Non-conserved Genes",
-         filename = paste0(savedir, "conservation_heatmap.pdf"))
+         filename = paste0("conservation_heatmap.pdf"))
 ```
 
 This creates a heatmap that shows expression patterns across samples, with genes annotated by their conservation status.
@@ -299,6 +298,6 @@ After identifying conserved and non-conserved genes, you might:
 
 ## Session Info
 
-```{r session_info, eval=FALSE}
+```{r session_info,eval=FALSE}
 sessionInfo()
 ```

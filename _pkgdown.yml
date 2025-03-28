@@ -19,6 +19,7 @@ navbar:
     github:
       icon: fab fa-github
       href: https://github.com/GilbertHan1011/TrajConserve
+      aria-label: GitHub
     
 reference:
   - title: Package

@@ -1,4 +1,0 @@
-STAN_HAS_CXX17 = true
-TBB_CXX_TYPE = gcc
-STANCFLAGS = --warn-uninitialized
-CXX = /usr/bin/g++ 

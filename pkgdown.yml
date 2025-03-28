@@ -1,0 +1,12 @@
+pandoc: 3.1.11
+pkgdown: 2.1.1
+pkgdown_sha: ~
+articles:
+  conservation_analysis: conservation_analysis.html
+  introduction: introduction.html
+  stan_note: stan_note.html
+  workflow: workflow.html
+last_built: 2025-03-28T14:53Z
+urls:
+  reference: https://GilbertHan1011.github.io/TrajConserve/reference
+  article: https://GilbertHan1011.github.io/TrajConserve/articles

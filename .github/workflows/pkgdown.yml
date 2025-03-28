@@ -30,18 +30,21 @@ jobs:
       # Modify DESCRIPTION file to remove cmdstanr completely
       - name: Remove cmdstanr from DESCRIPTION
         run: |
-          # Read DESCRIPTION file
-          desc_content=$(cat DESCRIPTION)
-          
-          # Remove cmdstanr from Suggests (using sed)
-          desc_content=$(echo "$desc_content" | sed -E 's/cmdstanr,|,cmdstanr|cmdstanr//g')
-          
-          # Write modified content back to DESCRIPTION
-          echo "$desc_content" > DESCRIPTION
+          # Modify DESCRIPTION file using R instead of sed
+          desc <- read.dcf("DESCRIPTION")
+          if ("Suggests" %in% colnames(desc)) {
+            suggests <- desc[1, "Suggests"]
+            # Remove cmdstanr from Suggests
+            suggests <- gsub("cmdstanr,|,cmdstanr|cmdstanr", "", suggests)
+            # Update the Suggests field
+            desc[1, "Suggests"] <- suggests
+          }
+          # Write back to DESCRIPTION file
+          write.dcf(desc, "DESCRIPTION")
           
           # Show the modified file for debugging
-          cat DESCRIPTION
-        shell: bash
+          cat(readLines("DESCRIPTION"), sep="\n")
+        shell: Rscript {0}
 
       # Install dependencies manually
       - name: Install dependencies

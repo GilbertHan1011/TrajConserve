@@ -63,7 +63,7 @@
                         <h4 data-toc-skip class="author">Gilbert
 Han</h4>
             
-            <h4 data-toc-skip class="date">2025-03-28</h4>
+            <h4 data-toc-skip class="date">2025-03-31</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/GilbertHan1011/TrajConserve/blob/main/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
       <div class="d-none name"><code>introduction.Rmd</code></div>
@@ -249,21 +249,23 @@ analyzing conservation:</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">output_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># 6. Visualize conservation</span></span>
-<span><span class="co"># Scatter plot</span></span>
-<span><span class="fu"><a href="../reference/plot_conservation.html">plot_conservation</a></span><span class="op">(</span></span>
-<span>  <span class="va">conservation_results</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="st">"scatter"</span>,</span>
-<span>  highlight_n <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  file_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">output_dir</span>, <span class="st">"conservation_scatter.pdf"</span><span class="op">)</span></span>
+<span><span class="co"># Create a heatmap with gene conservation annotation</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pheatmap</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Extract estimate matrix</span></span>
+<span><span class="va">estimate_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_hdf5_metric.html">extract_hdf5_metric</a></span><span class="op">(</span> <span class="va">output_file</span>, <span class="st">"Estimate"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create annotation data frame</span></span>
+<span><span class="va">gene_type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">conservation_results</span><span class="op">$</span><span class="va">is_conserved</span>, <span class="st">"Conserved"</span>, <span class="st">"Non-conserved"</span><span class="op">)</span></span>
+<span><span class="va">gene_anno</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Conservation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">gene_type</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Conserved"</span>, <span class="st">"Non-conserved"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  row.names <span class="op">=</span> <span class="va">conservation_results</span><span class="op">$</span><span class="va">gene</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Histogram</span></span>
-<span><span class="fu"><a href="../reference/plot_conservation.html">plot_conservation</a></span><span class="op">(</span></span>
-<span>  <span class="va">conservation_results</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="st">"histogram"</span>,</span>
-<span>  file_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">output_dir</span>, <span class="st">"conservation_histogram.pdf"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<span><span class="co"># Create heatmap</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">estimate_matrix</span><span class="op">)</span>, </span>
+<span>         annotation_row <span class="op">=</span> <span class="va">gene_anno</span>,</span>
+<span>         main <span class="op">=</span> <span class="st">"Expression Patterns of Conserved vs Non-conserved Genes"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 7. Print top conserved genes</span></span>
 <span><span class="va">top_conserved</span> <span class="op">&lt;-</span> <span class="va">conservation_results</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">conservation_results</span><span class="op">$</span><span class="va">conservation_score</span><span class="op">)</span>, <span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">]</span></span>
@@ -274,9 +276,9 @@ analyzing conservation:</p>
 </h3>
 <p>For more advanced usage, please see the other vignettes:</p>
 <ul>
-<li><a href="trajectory_modeling.html">Customizing trajectory
-models</a></li>
-<li><a href="hdf5_guide.html">Working with HDF5 files</a></li>
+<li><a href="workflow.html">workflow</a></li>
+<li><a href="https://scatlas.readthedocs.io/en/latest/trajectory/20250330_statistical_trajconserve.html" class="external-link">Statistical
+background</a></li>
 <li><a href="conservation_analysis.html">Conservation analysis in
 depth</a></li>
 </ul>

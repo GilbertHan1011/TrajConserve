@@ -73,20 +73,21 @@
 </h2>
 <p>This vignette focuses on the conservation analysis capabilities of
 the TrajConserve package. We’ll explore how to identify conserved gene
-expression patterns across samples, batch conditions, or experimental
-replicates.</p>
+overdispersion patterns across samples, batch conditions, or
+experimental replicates.</p>
 <div class="section level3">
 <h3 id="what-is-conservation">What is Conservation?<a class="anchor" aria-label="anchor" href="#what-is-conservation"></a>
 </h3>
 <p>In the context of TrajConserve, “conservation” refers to the
-consistency of gene expression patterns across different conditions. A
+consistency of overdispersion parameters across different conditions. A
 gene is considered conserved if:</p>
 <ol style="list-style-type: decimal">
-<li>It has high expression values (high mean estimate)</li>
-<li>It shows consistent expression across samples (low variability)</li>
+<li>It has high overdispersion (high mean estimate)</li>
+<li>It shows consistent overdispersion across samples (low
+variability)</li>
 </ol>
-<p>Genes that have low expression or high variability across samples are
-considered non-conserved.</p>
+<p>Genes that have low overdispersion or high variability across samples
+are considered non-conserved.</p>
 </div>
 <div class="section level3">
 <h3 id="the-conservation-score">The Conservation Score<a class="anchor" aria-label="anchor" href="#the-conservation-score"></a>
@@ -95,12 +96,12 @@ considered non-conserved.</p>
 combines two key aspects:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Mean Expression</strong>: Higher mean expression contributes
-to a higher conservation score</li>
+<strong>Mean overdispersion</strong>: Higher mean overdispersion
+contributes to a higher conservation score</li>
 <li>
-<strong>Expression Variability</strong>: Lower variability (measured
-by coefficient of variation) contributes to a higher conservation
-score</li>
+<strong>Overdispersion Variability</strong>: Lower variability
+(measured by coefficient of variation) contributes to a higher
+conservation score</li>
 </ol>
 <p>The relative importance of these factors can be adjusted using weight
 parameters.</p>
@@ -136,8 +137,8 @@ analysis:</p>
 <span><span class="va">conservation_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_conservation.html">calculate_conservation</a></span><span class="op">(</span></span>
 <span>  h5_file <span class="op">=</span> <span class="va">h5_file</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"Estimate"</span>,</span>
-<span>  mean_weight <span class="op">=</span> <span class="fl">0.7</span>,           <span class="co"># Give more importance to mean expression</span></span>
-<span>  variability_weight <span class="op">=</span> <span class="fl">0.3</span>,    <span class="co"># Give less importance to variability</span></span>
+<span>  mean_weight <span class="op">=</span> <span class="fl">0.7</span>,           <span class="co"># Give more importance to mean overdispersion</span></span>
+<span>  variability_weight <span class="op">=</span> <span class="fl">0.3</span>,    <span class="co"># Give less importance to overdispersion variability</span></span>
 <span>  conservation_threshold <span class="op">=</span> <span class="fl">0.8</span>, <span class="co"># Stricter threshold for conserved genes</span></span>
 <span>  normalize_scores <span class="op">=</span> <span class="cn">TRUE</span>      <span class="co"># Normalize scores to 0-1 range</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -152,13 +153,13 @@ with the following columns:</p>
 <li>
 <code>gene</code>: Gene identifier</li>
 <li>
-<code>mean_estimate</code>: Mean expression value</li>
+<code>mean_estimate</code>: Mean overdispersion value</li>
 <li>
-<code>sd_estimate</code>: Standard deviation of expression</li>
+<code>sd_estimate</code>: Standard deviation of overdispersion</li>
 <li>
 <code>cv</code>: Coefficient of variation (sd/mean)</li>
 <li>
-<code>range_estimate</code>: Range of expression values</li>
+<code>range_estimate</code>: Range of overdispersion values</li>
 <li>
 <code>mean_norm</code>: Normalized mean value (if normalize_scores =
 TRUE)</li>
@@ -177,8 +178,8 @@ conserved (based on threshold)</li>
 <div class="section level4">
 <h4 id="scatter-plot">Scatter Plot<a class="anchor" aria-label="anchor" href="#scatter-plot"></a>
 </h4>
-<p>The scatter plot shows the relationship between mean expression and
-variability:</p>
+<p>The scatter plot shows the relationship between mean overdispersion
+and variability:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a scatter plot</span></span>
 <span><span class="fu"><a href="../reference/plot_conservation.html">plot_conservation</a></span><span class="op">(</span></span>
@@ -203,7 +204,8 @@ variability:</p>
 <div class="section level4">
 <h4 id="heatmap">Heatmap<a class="anchor" aria-label="anchor" href="#heatmap"></a>
 </h4>
-<p>For creating heatmaps, you’ll need the original expression data:</p>
+<p>For creating heatmaps, you’ll need the original overdispersion
+data:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract the data</span></span>
 <span><span class="va">estimate_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_hdf5_metric.html">extract_hdf5_metric</a></span><span class="op">(</span><span class="va">h5_file</span>, <span class="st">"Estimate"</span><span class="op">)</span></span>
@@ -228,7 +230,7 @@ variability:</p>
 <span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">estimate_matrix</span><span class="op">)</span>, </span>
 <span>         annotation_row <span class="op">=</span> <span class="va">gene_anno</span>,</span>
 <span>         annotation_colors <span class="op">=</span> <span class="va">anno_colors</span>,</span>
-<span>         main <span class="op">=</span> <span class="st">"Expression Patterns of Conserved vs Non-conserved Genes"</span>,</span>
+<span>         main <span class="op">=</span> <span class="st">"Overdispersion Patterns of Conserved vs Non-conserved Genes"</span>,</span>
 <span>         cluster_rows <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>         cluster_cols <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -322,7 +324,7 @@ developmental trajectory:</p>
 <span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">plot_data</span><span class="op">)</span>,</span>
 <span>         annotation_row <span class="op">=</span> <span class="va">gene_anno</span>,</span>
 <span>         scale <span class="op">=</span> <span class="st">"row"</span>,</span>
-<span>         main <span class="op">=</span> <span class="st">"Expression Patterns Across Samples"</span>,</span>
+<span>         main <span class="op">=</span> <span class="st">"Overdispersion Patterns Across Samples"</span>,</span>
 <span>         fontsize_row <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -353,10 +355,10 @@ transitions may show lower conservation</li>
 <h3 id="conclusion">Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
 </h3>
 <p>Conservation analysis is a powerful tool for identifying genes with
-consistent expression patterns across experimental conditions. By
-quantifying both expression level and variability, TrajConserve provides
-a robust approach to finding biologically meaningful patterns in your
-trajectory data.</p>
+consistent overdispersion patterns across experimental conditions. By
+quantifying both overdispersion level and variability, TrajConserve
+provides a robust approach to finding biologically meaningful patterns
+in your trajectory data.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

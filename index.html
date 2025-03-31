@@ -59,11 +59,11 @@
 <div class="page-header"><h1 id="trajconserve">TrajConserve<a class="anchor" aria-label="anchor" href="#trajconserve"></a>
 </h1></div>
 <p><a href="https://github.com/GilbertHan1011/TrajConserve/actions/workflows/pkgdown.yml" class="external-link"><img src="https://github.com/GilbertHan1011/TrajConserve/actions/workflows/pkgdown.yml/badge.svg" alt="pkgdown"></a> <a href="https://GilbertHan1011.github.io/TrajConserve/"><img src="https://img.shields.io/badge/website-online-blue.svg" alt="Website"></a></p>
-<p>Trajectory Conservation Analysis Tools for Single-Cell Data</p>
+<p>Trajectory Conservation Analysis Tools for Single-Cell Trajectories</p>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p><code>TrajConserve</code> is an R package designed for analyzing trajectory conservation in single-cell data. It enables the identification of conserved and non-conserved gene expression patterns across developmental trajectories.</p>
+<p><code>TrajConserve</code> is an R package designed for analyzing trajectory conservation among population-level single-cell trajectory datastes. It enables the identification of conserved and non-conserved gene expression patterns across developmental trajectories.</p>
 <div class="section level3">
 <h3 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
 </h3>
@@ -82,8 +82,7 @@
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
-<p>For detailed documentation, tutorials, and examples, visit our <a href="https://GilbertHan1011.github.io/TrajConserve/">website</a>.</p>
-<p>The documentation website is automatically built and deployed using GitHub Actions whenever changes are pushed to the main branch.</p>
+<p>For detailed documentation, tutorials, and examples, visit our <a href="https://GilbertHan1011.github.io/TrajConserve/">website</a>. And if you want to know the statistical background of TrajConserve, you can visit this <a href="https://scatlas.readthedocs.io/en/latest/trajectory/20250330_statistical_trajconserve.html" class="external-link">website</a></p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -128,7 +127,7 @@
 <span><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu">check_cmdstan_toolchain</span><span class="op">(</span>fix <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>timeout <span class="op">=</span> <span class="fl">600</span><span class="op">)</span>  <span class="co"># Set a longer timeout for downloading</span></span>
 <span><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu">install_cmdstan</span><span class="op">(</span>cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p>These settings ensure Stan can properly compile with your C++ environment. After installing cmdstanr, you can use it by setting <code>backend = "cmdstanr"</code> in the modeling functions. Without the above configuration, you might encounter errors related to C++17 detection and TBB_CXX_TYPE settings.</p>
+<p>These settings ensure Stan can properly compile with your C++ environment. After installing cmdstanr, you can use it by setting <code>backend = "cmdstanr"</code> in the modeling functions.</p>
 </div>
 </div>
 <div class="section level2">
@@ -228,21 +227,6 @@
 <p><strong>Trajectory Analysis</strong> - <code><a href="reference/seurat_to_trajectory_array.html">seurat_to_trajectory_array()</a></code>: Converts a Seurat object to a 3D trajectory array - <code><a href="reference/bayesian_gam_regression_nb_shape.html">bayesian_gam_regression_nb_shape()</a></code>: Fits a Bayesian GAM model with negative binomial distribution - <code><a href="reference/run_multiple_models.html">run_multiple_models()</a></code>: Runs models for multiple genes - <code><a href="reference/plot_results_brms.html">plot_results_brms()</a></code>: Visualizes model results</p>
 <p><strong>Conservation Analysis</strong> - <code><a href="reference/calculate_conservation.html">calculate_conservation()</a></code>: Calculates conservation scores for genes - <code><a href="reference/plot_conservation.html">plot_conservation()</a></code>: Creates visualizations of conservation results - <code><a href="reference/extract_hdf5_metric.html">extract_hdf5_metric()</a></code>: Extracts metrics from HDF5 files</p>
 <p><strong>HDF5 Utilities</strong> - <code><a href="reference/extract_hdf5_metric.html">extract_hdf5_metric()</a></code>: Extract metrics from HDF5 files - <code><a href="reference/plot_hdf5_heatmap.html">plot_hdf5_heatmap()</a></code>: Create heatmaps from HDF5 data</p>
-</div>
-<div class="section level2">
-<h2 id="website-development">Website Development<a class="anchor" aria-label="anchor" href="#website-development"></a>
-</h2>
-<p>The documentation website is automatically built and deployed using GitHub Actions whenever changes are pushed to the main branch.</p>
-<p>To build the documentation website locally for testing:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install pkgdown if needed</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pkgdown"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Build the site</span></span>
-<span><span class="fu">pkgdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">build_site</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Alternatively, run the included script:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">Rscript</span> build_site.R</span></code></pre></div>
-<p>The automated GitHub Actions workflow is defined in <code>.github/workflows/pkgdown.yml</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>

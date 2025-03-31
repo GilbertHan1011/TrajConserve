@@ -63,7 +63,7 @@
                         <h4 data-toc-skip class="author">Gilbert
 Han</h4>
             
-            <h4 data-toc-skip class="date">2025-03-28</h4>
+            <h4 data-toc-skip class="date">2025-03-31</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/GilbertHan1011/TrajConserve/blob/main/vignettes/workflow.Rmd" class="external-link"><code>vignettes/workflow.Rmd</code></a></small>
       <div class="d-none name"><code>workflow.Rmd</code></div>
@@ -315,7 +315,7 @@ results with expression patterns:</p>
 <span><span class="fu"><a href="https://rdrr.io/pkg/pheatmap/man/pheatmap.html" class="external-link">pheatmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">estimate_matrix</span><span class="op">)</span>, </span>
 <span>         annotation_row <span class="op">=</span> <span class="va">gene_anno</span>,</span>
 <span>         main <span class="op">=</span> <span class="st">"Expression Patterns of Conserved vs Non-conserved Genes"</span>,</span>
-<span>         filename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"conservation_heatmap.pdf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>         filename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">savedir</span>,<span class="st">"conservation_heatmap.pdf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>This creates a heatmap that shows expression patterns across samples,
 with genes annotated by their conservation status.</p>
 </div>

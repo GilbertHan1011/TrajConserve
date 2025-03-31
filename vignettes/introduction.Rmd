@@ -166,21 +166,23 @@ if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
 
-# 6. Visualize conservation
-# Scatter plot
-plot_conservation(
-  conservation_results,
-  plot_type = "scatter",
-  highlight_n = 10,
-  file_path = file.path(output_dir, "conservation_scatter.pdf")
+# Create a heatmap with gene conservation annotation
+library(pheatmap)
+
+# Extract estimate matrix
+estimate_matrix <- extract_hdf5_metric( output_file, "Estimate")
+
+# Create annotation data frame
+gene_type <- ifelse(conservation_results$is_conserved, "Conserved", "Non-conserved")
+gene_anno <- data.frame(
+  Conservation = factor(gene_type, levels = c("Conserved", "Non-conserved")),
+  row.names = conservation_results$gene
 )
 
-# Histogram
-plot_conservation(
-  conservation_results,
-  plot_type = "histogram",
-  file_path = file.path(output_dir, "conservation_histogram.pdf")
-)
+# Create heatmap
+pheatmap(t(estimate_matrix), 
+         annotation_row = gene_anno,
+         main = "Expression Patterns of Conserved vs Non-conserved Genes")
 
 # 7. Print top conserved genes
 top_conserved <- conservation_results[order(-conservation_results$conservation_score), ][1:10, ]
@@ -191,6 +193,6 @@ print(top_conserved[, c("gene", "conservation_score", "is_conserved", "mean_esti
 
 For more advanced usage, please see the other vignettes:
 
-- [Customizing trajectory models](trajectory_modeling.html)
-- [Working with HDF5 files](hdf5_guide.html)
+- [workflow](workflow.html)
+- [Statistical background](https://scatlas.readthedocs.io/en/latest/trajectory/20250330_statistical_trajconserve.html)
 - [Conservation analysis in depth](conservation_analysis.html)

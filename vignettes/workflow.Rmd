@@ -4,7 +4,7 @@ author: "Gilbert Han"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{TrajConserve Workflow}
+  %\VignetteIndexEntry{01 TrajConserve Workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -269,7 +269,7 @@ gene_anno <- data.frame(
 pheatmap(t(estimate_matrix), 
          annotation_row = gene_anno,
          main = "Expression Patterns of Conserved vs Non-conserved Genes",
-         filename = paste0("conservation_heatmap.pdf"))
+         filename = paste0(savedir,"conservation_heatmap.pdf"))
 ```
 
 This creates a heatmap that shows expression patterns across samples, with genes annotated by their conservation status.

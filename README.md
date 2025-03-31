@@ -3,11 +3,11 @@
 [![pkgdown](https://github.com/GilbertHan1011/TrajConserve/actions/workflows/pkgdown.yml/badge.svg)](https://github.com/GilbertHan1011/TrajConserve/actions/workflows/pkgdown.yml)
 [![Website](https://img.shields.io/badge/website-online-blue.svg)](https://GilbertHan1011.github.io/TrajConserve/)
 
-Trajectory Conservation Analysis Tools for Single-Cell Data
+Trajectory Conservation Analysis Tools for Single-Cell Trajectories
 
 ## Overview
 
-`TrajConserve` is an R package designed for analyzing trajectory conservation in single-cell data. It enables the identification of conserved and non-conserved gene expression patterns across developmental trajectories.
+`TrajConserve` is an R package designed for analyzing trajectory conservation among population-level single-cell trajectory datastes. It enables the identification of conserved and non-conserved gene expression patterns across developmental trajectories.
 
 ### Key Features
 
@@ -18,9 +18,9 @@ Trajectory Conservation Analysis Tools for Single-Cell Data
 
 ## Documentation
 
-For detailed documentation, tutorials, and examples, visit our [website](https://GilbertHan1011.github.io/TrajConserve/).
+For detailed documentation, tutorials, and examples, visit our [website](https://GilbertHan1011.github.io/TrajConserve/). And if you want to know the statistical background of TrajConserve, you can visit this [website](https://scatlas.readthedocs.io/en/latest/trajectory/20250330_statistical_trajconserve.html)
 
-The documentation website is automatically built and deployed using GitHub Actions whenever changes are pushed to the main branch.
+
 
 ## Installation
 
@@ -66,7 +66,7 @@ options(timeout = 600)  # Set a longer timeout for downloading
 cmdstanr::install_cmdstan(cores = 2)
 ```
 
-These settings ensure Stan can properly compile with your C++ environment. After installing cmdstanr, you can use it by setting `backend = "cmdstanr"` in the modeling functions. Without the above configuration, you might encounter errors related to C++17 detection and TBB_CXX_TYPE settings.
+These settings ensure Stan can properly compile with your C++ environment. After installing cmdstanr, you can use it by setting `backend = "cmdstanr"` in the modeling functions. 
 
 ## Quick Start
 
@@ -174,27 +174,7 @@ pheatmap(t(estimate_matrix),
 - `extract_hdf5_metric()`: Extract metrics from HDF5 files
 - `plot_hdf5_heatmap()`: Create heatmaps from HDF5 data
 
-## Website Development
 
-The documentation website is automatically built and deployed using GitHub Actions whenever changes are pushed to the main branch.
-
-To build the documentation website locally for testing:
-
-```r
-# Install pkgdown if needed
-install.packages("pkgdown")
-
-# Build the site
-pkgdown::build_site()
-```
-
-Alternatively, run the included script:
-
-```bash
-Rscript build_site.R
-```
-
-The automated GitHub Actions workflow is defined in `.github/workflows/pkgdown.yml`.
 
 ## License
 

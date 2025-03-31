@@ -2,7 +2,7 @@
 title: "Conservation Analysis with TrajConserve"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Conservation Analysis with TrajConserve}
+  %\VignetteIndexEntry{02 Conservation Analysis with TrajConserve}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,23 +18,23 @@ knitr::opts_chunk$set(
 
 # Conservation Analysis with TrajConserve
 
-This vignette focuses on the conservation analysis capabilities of the TrajConserve package. We'll explore how to identify conserved gene expression patterns across samples, batch conditions, or experimental replicates.
+This vignette focuses on the conservation analysis capabilities of the TrajConserve package. We'll explore how to identify conserved gene overdispersion patterns across samples, batch conditions, or experimental replicates.
 
 ## What is Conservation?
 
-In the context of TrajConserve, "conservation" refers to the consistency of gene expression patterns across different conditions. A gene is considered conserved if:
+In the context of TrajConserve, "conservation" refers to the consistency of overdispersion parameters across different conditions. A gene is considered conserved if:
 
-1. It has high expression values (high mean estimate)
-2. It shows consistent expression across samples (low variability)
+1. It has high overdispersion (high mean estimate)
+2. It shows consistent overdispersion across samples (low variability)
 
-Genes that have low expression or high variability across samples are considered non-conserved.
+Genes that have low overdispersion or high variability across samples are considered non-conserved.
 
 ## The Conservation Score 
 
 TrajConserve quantifies conservation using a weighted score that combines two key aspects:
 
-1. **Mean Expression**: Higher mean expression contributes to a higher conservation score
-2. **Expression Variability**: Lower variability (measured by coefficient of variation) contributes to a higher conservation score
+1. **Mean overdispersion**: Higher mean overdispersion contributes to a higher conservation score
+2. **Overdispersion Variability**: Lower variability (measured by coefficient of variation) contributes to a higher conservation score
 
 The relative importance of these factors can be adjusted using weight parameters.
 
@@ -67,8 +67,8 @@ You can adjust several parameters to customize the conservation analysis:
 conservation_results <- calculate_conservation(
   h5_file = h5_file,
   metric = "Estimate",
-  mean_weight = 0.7,           # Give more importance to mean expression
-  variability_weight = 0.3,    # Give less importance to variability
+  mean_weight = 0.7,           # Give more importance to mean overdispersion
+  variability_weight = 0.3,    # Give less importance to overdispersion variability
   conservation_threshold = 0.8, # Stricter threshold for conserved genes
   normalize_scores = TRUE      # Normalize scores to 0-1 range
 )
@@ -79,10 +79,10 @@ conservation_results <- calculate_conservation(
 The `calculate_conservation` function returns a data frame with the following columns:
 
 - `gene`: Gene identifier
-- `mean_estimate`: Mean expression value
-- `sd_estimate`: Standard deviation of expression
+- `mean_estimate`: Mean overdispersion value
+- `sd_estimate`: Standard deviation of overdispersion
 - `cv`: Coefficient of variation (sd/mean)
-- `range_estimate`: Range of expression values
+- `range_estimate`: Range of overdispersion values
 - `mean_norm`: Normalized mean value (if normalize_scores = TRUE)
 - `cv_norm`: Normalized inverse variability
 - `conservation_score`: Overall conservation score
@@ -92,7 +92,7 @@ The `calculate_conservation` function returns a data frame with the following co
 
 ### Scatter Plot
 
-The scatter plot shows the relationship between mean expression and variability:
+The scatter plot shows the relationship between mean overdispersion and variability:
 
 ```{r, eval=FALSE}
 # Create a scatter plot
@@ -119,7 +119,7 @@ plot_conservation(
 
 ### Heatmap
 
-For creating heatmaps, you'll need the original expression data:
+For creating heatmaps, you'll need the original overdispersion data:
 
 ```{r, eval=FALSE}
 # Extract the data
@@ -145,7 +145,7 @@ anno_colors <- list(
 pheatmap(t(estimate_matrix), 
          annotation_row = gene_anno,
          annotation_colors = anno_colors,
-         main = "Expression Patterns of Conserved vs Non-conserved Genes",
+         main = "Overdispersion Patterns of Conserved vs Non-conserved Genes",
          cluster_rows = TRUE,
          cluster_cols = TRUE)
 ```
@@ -238,7 +238,7 @@ gene_anno <- data.frame(
 pheatmap(t(plot_data),
          annotation_row = gene_anno,
          scale = "row",
-         main = "Expression Patterns Across Samples",
+         main = "Overdispersion Patterns Across Samples",
          fontsize_row = 8)
 ```
 
@@ -258,4 +258,4 @@ When interpreting conservation results:
 
 ## Conclusion
 
-Conservation analysis is a powerful tool for identifying genes with consistent expression patterns across experimental conditions. By quantifying both expression level and variability, TrajConserve provides a robust approach to finding biologically meaningful patterns in your trajectory data. 
+Conservation analysis is a powerful tool for identifying genes with consistent overdispersion patterns across experimental conditions. By quantifying both overdispersion level and variability, TrajConserve provides a robust approach to finding biologically meaningful patterns in your trajectory data. 
